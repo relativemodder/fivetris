@@ -1,6 +1,16 @@
 # fivetris
 This is a Rust rewrite of [four-tris](https://github.com/fiorescarlatto/four-tris), an open source training tool for block-stacking games. It is built for quickly exploring different situations, testing options, and training freely in a Tetris-like environment.
 
+# Download
+
+You can download the latest release from the [releases page](https://github.com/relativemodder/fivetris/releases).
+
+<img src="./assets/docs/1.png">
+<p align="center">You can draw pieces on the board and test different strategies</p>
+<img src="./assets/docs/2.png">
+<img src="./assets/docs/3.png">
+<p align="center">...and screenshot other Tetris-like games' board states.</p>
+
 ## Reporting issues, suggestions, feedback, bugs
 
 1. Open an issue in this repository if you are not sure whether something is a bug or expected behavior.
