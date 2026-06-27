@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-pub const BUILTIN_COLORS_INI: &str = include_str!("../reference/colors.ini");
+pub const BUILTIN_COLORS_INI: &str = include_str!("../assets/colors.ini");
 pub const BUILTIN_PIECE_LIST: &str = include_str!("../assets/piece_list.txt");
 
 const BUILTIN_TEXTURES: [(&str, &[u8]); 2] = [
