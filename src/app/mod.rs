@@ -69,6 +69,8 @@ pub struct FourTrisApp {
     waiting_for_screenshot: bool,
     bag_edit_text: String,
     hold_edit_text: String,
+    #[cfg(target_os = "windows")]
+    last_dark_mode: Option<bool>,
 }
 
 impl Default for FourTrisApp {
@@ -116,6 +118,8 @@ impl Default for FourTrisApp {
             waiting_for_screenshot: false,
             bag_edit_text: String::new(),
             hold_edit_text: String::new(),
+            #[cfg(target_os = "windows")]
+            last_dark_mode: None,
         };
         if !app.screenshot_service.is_available() {
             app.set_status("Screenshot service unavailable");
@@ -139,13 +143,34 @@ impl FourTrisApp {
         }
     }
 
-    fn apply_theme(&self, ctx: &egui::Context) {
-        let theme = match self.config.theme {
+    fn resolve_theme(&self, ctx: &egui::Context) -> egui::Theme {
+        match self.config.theme {
             ThemeMode::Light => egui::Theme::Light,
             ThemeMode::Dark => egui::Theme::Dark,
             ThemeMode::Auto => ctx.system_theme().unwrap_or(egui::Theme::Dark),
-        };
+        }
+    }
+
+    fn apply_theme(&self, ctx: &egui::Context) -> egui::Theme {
+        let theme = self.resolve_theme(ctx);
         ctx.set_theme(theme);
+        theme
+    }
+
+    #[cfg(target_os = "windows")]
+    fn apply_dark_mode(&mut self, frame: &eframe::Frame, theme: egui::Theme) {
+        let dark = theme == egui::Theme::Dark;
+        if self.last_dark_mode == Some(dark) {
+            return;
+        }
+        self.last_dark_mode = Some(dark);
+
+        use raw_window_handle::HasWindowHandle;
+
+        let Some(window) = frame.winit_window() else { return };
+        let Ok(handle) = window.window_handle() else { return };
+        let raw_window_handle::RawWindowHandle::Win32(win32) = handle.as_raw() else { return };
+        crate::platform::set_window_dark_mode(win32.hwnd.get() as *mut std::ffi::c_void, dark);
     }
 
     fn bag_mode_from_config(config: &AppConfig) -> BagMode {
@@ -317,7 +342,9 @@ mod tests {
 impl eframe::App for FourTrisApp {
     fn ui(&mut self, app_ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let ctx = app_ui.ctx().clone();
-        self.apply_theme(&ctx);
+        let theme = self.apply_theme(&ctx);
+        #[cfg(target_os = "windows")]
+        self.apply_dark_mode(frame, theme);
         commands::poll_platform_events(self);
 
         let now = Instant::now();
