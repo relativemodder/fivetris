@@ -1,3 +1,5 @@
+#![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
+
 fn setup_custom_fonts(ctx: &egui::Context) {
     use std::sync::Arc;
 
