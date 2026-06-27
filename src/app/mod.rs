@@ -32,8 +32,8 @@ use crate::platform::{
     SystemClipboard, analyze_board_image, import_board_from_analysis, screenshot_analyzer,
 };
 use crate::render::{
-    GameRenderView, RenderStyle, TextureAtlas, draw_board, draw_next_panel,
-    draw_settings_window, draw_sidebar, fa_btn, load_texture_atlas, load_texture_atlas_bytes,
+    GameRenderView, RenderStyle, TextureAtlas, draw_board, draw_next_panel, draw_settings_window,
+    draw_sidebar, fa_btn, load_texture_atlas, load_texture_atlas_bytes,
 };
 use crate::resources;
 
@@ -66,6 +66,7 @@ pub struct FourTrisApp {
     loaded_texture_name: Option<String>,
     last_time: Instant,
     screenshot_crop: Option<ScreenshotCropState>,
+    waiting_for_screenshot: bool,
     bag_edit_text: String,
     hold_edit_text: String,
 }
@@ -112,6 +113,7 @@ impl Default for FourTrisApp {
             loaded_texture_name: None,
             last_time: Instant::now(),
             screenshot_crop: None,
+            waiting_for_screenshot: false,
             bag_edit_text: String::new(),
             hold_edit_text: String::new(),
         };
@@ -236,7 +238,6 @@ impl FourTrisApp {
             }
         }
     }
-
 }
 
 #[cfg(test)]
@@ -314,7 +315,7 @@ mod tests {
 }
 
 impl eframe::App for FourTrisApp {
-    fn ui(&mut self, app_ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, app_ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let ctx = app_ui.ctx().clone();
         self.apply_theme(&ctx);
         commands::poll_platform_events(self);
@@ -352,6 +353,14 @@ impl eframe::App for FourTrisApp {
         });
 
         view::render_screenshot_crop_window_ui(self, &ctx);
+
+        if let Some(window) = frame.winit_window() {
+            let native_wayland =
+                std::env::var("WAYLAND_DISPLAY").is_ok() && std::env::var("DISPLAY").is_err();
+            if !native_wayland {
+                window.set_visible(!self.waiting_for_screenshot);
+            }
+        }
 
         if self.screenshot_crop.is_none() {
             ctx.request_repaint();

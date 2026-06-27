@@ -1,5 +1,7 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
+use image::GenericImageView;
+
 fn setup_custom_fonts(ctx: &egui::Context) {
     use std::sync::Arc;
 
@@ -43,7 +45,17 @@ fn setup_custom_fonts(ctx: &egui::Context) {
 }
 
 fn main() -> eframe::Result<()> {
-    let options = eframe::NativeOptions::default();
+    let icon = {
+        let image = image::load_from_memory(fivetris::resources::BUILTIN_ICON_PNG)
+            .expect("icon.png embedded")
+            .into_rgba8();
+        let (w, h) = image.dimensions();
+        egui::IconData { rgba: image.into_raw(), width: w, height: h }
+    };
+    let options = eframe::NativeOptions {
+        viewport: egui::ViewportBuilder::default().with_icon(icon),
+        ..Default::default()
+    };
     eframe::run_native(
         "fivetris",
         options,

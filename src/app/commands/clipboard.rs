@@ -99,7 +99,10 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
             Err(error) => app.set_status(format!("Paste failed: {error}")),
         },
         AppAction::RequestScreenshot => {
-            app.request_interactive_capture();
+            if !app.waiting_for_screenshot {
+                app.waiting_for_screenshot = true;
+                app.request_interactive_capture();
+            }
             app.set_status("Requested interactive screenshot");
         }
         _ => return false,
@@ -110,17 +113,20 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
 pub(crate) fn poll_platform_events(app: &mut FourTrisApp) {
     while let Ok(event) = app.platform_events.try_recv() {
         match event {
-            PlatformEvent::ScreenshotReady(result) => match result {
-                Ok(image) => match screenshot_analyzer::screenshot_image_to_rgba(&image) {
-                    Ok(rgba) => start_screenshot_crop(app, rgba),
+            PlatformEvent::ScreenshotReady(result) => {
+                app.waiting_for_screenshot = false;
+                match result {
+                    Ok(image) => match screenshot_analyzer::screenshot_image_to_rgba(&image) {
+                        Ok(rgba) => start_screenshot_crop(app, rgba),
+                        Err(error) => {
+                            app.set_status(format!("Screenshot analysis failed: {error:?}"))
+                        }
+                    },
                     Err(error) => {
-                        app.set_status(format!("Screenshot analysis failed: {error:?}"))
+                        app.set_status(format!("Screenshot capture failed: {error}"));
                     }
-                },
-                Err(error) => {
-                    app.set_status(format!("Screenshot capture failed: {error}"));
                 }
-            },
+            }
         }
     }
 }
