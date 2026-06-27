@@ -10,6 +10,7 @@ pub struct ScreenshotAnalysisConfig {
     pub board_visible_height: usize,
     pub neighborhood_radius: u32,
     pub empty_lightness_threshold: f32,
+    pub empty_lightness_high_threshold: f32,
     pub gray_saturation_threshold: f32,
 }
 
@@ -20,6 +21,7 @@ impl Default for ScreenshotAnalysisConfig {
             board_visible_height: crate::core::DEFAULT_VISIBLE_HEIGHT,
             neighborhood_radius: 1,
             empty_lightness_threshold: 20.833,
+            empty_lightness_high_threshold: 80.0,
             gray_saturation_threshold: 8.333,
         }
     }
@@ -178,6 +180,9 @@ fn classify_cell(rgba: [u8; 4], config: &ScreenshotAnalysisConfig) -> Cell {
 
     let (hue, saturation, lightness) = rgb_to_hsl(rgba[0], rgba[1], rgba[2]);
     if lightness < config.empty_lightness_threshold {
+        return Cell::Empty;
+    }
+    if lightness > config.empty_lightness_high_threshold {
         return Cell::Empty;
     }
     if saturation < config.gray_saturation_threshold {

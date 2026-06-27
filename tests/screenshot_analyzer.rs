@@ -50,8 +50,43 @@ fn detects_empty_cells() {
 
 #[test]
 fn detects_gray_garbage_cells() {
-    let cells = analyze_cells(&[&[Rgba([160, 160, 160, 255]), Rgba([220, 220, 220, 255])]]);
+    let cells = analyze_cells(&[&[Rgba([160, 160, 160, 255]), Rgba([136, 136, 136, 255])]]);
     assert_eq!(cells, vec![Cell::Gray, Cell::Gray]);
+}
+
+#[test]
+fn detects_white_cells_as_empty_for_light_theme() {
+    let cells = analyze_cells(&[&[
+        Rgba([255, 255, 255, 255]),
+        Rgba([245, 245, 245, 255]),
+        Rgba([240, 240, 240, 255]),
+    ]]);
+    assert_eq!(cells, vec![Cell::Empty, Cell::Empty, Cell::Empty]);
+}
+
+#[test]
+fn detects_warm_white_as_empty_not_o_piece() {
+    let cells = analyze_cells(&[&[
+        Rgba([255, 255, 230, 255]),
+        Rgba([250, 250, 220, 255]),
+    ]]);
+    assert_eq!(cells, vec![Cell::Empty, Cell::Empty]);
+}
+
+#[test]
+fn detects_dark_gray_garbage_on_light_theme() {
+    let cells = analyze_cells(&[&[Rgba([85, 85, 85, 255]), Rgba([68, 68, 68, 255])]]);
+    assert_eq!(cells, vec![Cell::Gray, Cell::Gray]);
+}
+
+#[test]
+fn detects_colored_pieces_on_light_theme() {
+    let cells = analyze_cells(&[&[
+        Rgba([0, 255, 255, 255]),
+        Rgba([255, 0, 0, 255]),
+        Rgba([255, 255, 0, 255]),
+    ]]);
+    assert_eq!(cells, vec![Cell::I, Cell::Z, Cell::O]);
 }
 
 #[test]
