@@ -1,35 +1,6 @@
 # fivetris
 This is a Rust rewrite of [four-tris](https://github.com/fiorescarlatto/four-tris), an open source training tool for block-stacking games. It is built for quickly exploring different situations, testing options, and training freely in a Tetris-like environment.
 
-## Creating custom Skins
-
-You can add your own custom skins inside `~/.local/share/fivetris/skins/`.
-All custom skins must follow these requirements:
-- Must be a `.ini` file.
-- Must define palette values for the blocks and UI colors.
-- `STYLE=0` uses flat blocks, `STYLE=1` uses inset blocks.
-
-You can follow the palette format used by the built-in skins. A skin section may define `I`, `J`, `S`, `O`, `Z`, `L`, `T`, `G`, `F`, `BKG`, `BOX`, and `TXT` colors.
-
-Example:
-
-```ini
-[My Skin]
-I=00D0FF
-J=4080FF
-S=40D040
-O=FFE020
-Z=FF4020
-L=FF8020
-T=A040F0
-G=CCCCCC
-F=2F3136
-BKG=2F3136
-BOX=000000
-TXT=FFFFFF
-STYLE=1
-```
-
 ## Reporting issues, suggestions, feedback, bugs
 
 1. Open an issue in this repository if you are not sure whether something is a bug or expected behavior.
