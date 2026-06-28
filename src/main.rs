@@ -1,14 +1,12 @@
 #![cfg_attr(target_os = "windows", windows_subsystem = "windows")]
 
-use image::GenericImageView;
-
 fn setup_custom_fonts(ctx: &egui::Context) {
     use std::sync::Arc;
 
     let mut fonts = egui::FontDefinitions::empty();
 
-    let inter_data = fivetris::resources::builtin_font_bytes("Inter.ttf")
-        .expect("Inter.ttf embedded");
+    let inter_data =
+        fivetris::resources::builtin_font_bytes("Inter.ttf").expect("Inter.ttf embedded");
     let inter_italic = fivetris::resources::builtin_font_bytes("Inter-Italic.ttf")
         .expect("Inter-Italic.ttf embedded");
     let fa_solid = fivetris::resources::builtin_font_bytes("FontAwesome-Solid.ttf")
@@ -16,9 +14,10 @@ fn setup_custom_fonts(ctx: &egui::Context) {
     let fa_regular = fivetris::resources::builtin_font_bytes("FontAwesome-Regular.ttf")
         .expect("FontAwesome-Regular.ttf embedded");
 
-    fonts
-        .font_data
-        .insert("Inter".to_owned(), Arc::new(egui::FontData::from_static(inter_data)));
+    fonts.font_data.insert(
+        "Inter".to_owned(),
+        Arc::new(egui::FontData::from_static(inter_data)),
+    );
     fonts.font_data.insert(
         "Inter-Italic".to_owned(),
         Arc::new(egui::FontData::from_static(inter_italic)),
@@ -32,12 +31,18 @@ fn setup_custom_fonts(ctx: &egui::Context) {
         Arc::new(egui::FontData::from_static(fa_regular)),
     );
 
-    let proportional = fonts.families.entry(egui::FontFamily::Proportional).or_default();
+    let proportional = fonts
+        .families
+        .entry(egui::FontFamily::Proportional)
+        .or_default();
     proportional.push("Inter".to_owned());
     proportional.push("FontAwesome-Solid".to_owned());
     proportional.push("FontAwesome-Regular".to_owned());
 
-    let monospace = fonts.families.entry(egui::FontFamily::Monospace).or_default();
+    let monospace = fonts
+        .families
+        .entry(egui::FontFamily::Monospace)
+        .or_default();
     monospace.push("Inter".to_owned());
     monospace.push("FontAwesome-Solid".to_owned());
 
@@ -50,7 +55,11 @@ fn main() -> eframe::Result<()> {
             .expect("icon.png embedded")
             .into_rgba8();
         let (w, h) = image.dimensions();
-        egui::IconData { rgba: image.into_raw(), width: w, height: h }
+        egui::IconData {
+            rgba: image.into_raw(),
+            width: w,
+            height: h,
+        }
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default().with_icon(icon),

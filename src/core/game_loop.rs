@@ -268,7 +268,7 @@ impl GameLoop {
     }
 
     pub fn try_rotate_piece(&mut self, command: RotationCommand) -> bool {
-        let before = self.game.current;
+        let _before = self.game.current;
         let success = try_rotate(&mut self.game, command);
         if success {
             let used_kick = self.game.spin.last_kick_index.is_some();

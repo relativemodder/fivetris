@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Fivetris
+Comment=Simple Tetris trainer
+Exec=fivetris
+Icon=fivetris
+Categories=Game;LogicGame;
+Terminal=false
+StartupNotify=true

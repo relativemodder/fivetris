@@ -167,9 +167,15 @@ impl FourTrisApp {
 
         use raw_window_handle::HasWindowHandle;
 
-        let Some(window) = frame.winit_window() else { return };
-        let Ok(handle) = window.window_handle() else { return };
-        let raw_window_handle::RawWindowHandle::Win32(win32) = handle.as_raw() else { return };
+        let Some(window) = frame.winit_window() else {
+            return;
+        };
+        let Ok(handle) = window.window_handle() else {
+            return;
+        };
+        let raw_window_handle::RawWindowHandle::Win32(win32) = handle.as_raw() else {
+            return;
+        };
         crate::platform::set_window_dark_mode(win32.hwnd.get() as *mut std::ffi::c_void, dark);
     }
 
@@ -342,9 +348,9 @@ mod tests {
 impl eframe::App for FourTrisApp {
     fn ui(&mut self, app_ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let ctx = app_ui.ctx().clone();
-        let theme = self.apply_theme(&ctx);
+        let _theme = self.apply_theme(&ctx);
         #[cfg(target_os = "windows")]
-        self.apply_dark_mode(frame, theme);
+        self.apply_dark_mode(frame, _theme);
         commands::poll_platform_events(self);
 
         let now = Instant::now();

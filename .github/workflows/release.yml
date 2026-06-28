@@ -41,8 +41,11 @@ jobs:
 
       - name: Package
         run: |
-          cp target/x86_64-unknown-linux-gnu/release/fivetris fivetris-linux-x86_64
-          tar czf fivetris-${{ github.ref_name }}-linux-x86_64.tar.gz fivetris-linux-x86_64
+          RELEASE="target/x86_64-unknown-linux-gnu/release"
+          PKG_DIR="fivetris-${{ github.ref_name }}-linux-x86_64"
+          mkdir -p "$PKG_DIR"
+          cp "$RELEASE/fivetris" "$RELEASE/"*.desktop "$RELEASE/"*.png "$RELEASE/"*.sh "$PKG_DIR/"
+          tar czf "$PKG_DIR.tar.gz" "$PKG_DIR"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
