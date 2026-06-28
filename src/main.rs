@@ -63,7 +63,7 @@ fn main() -> eframe::Result<()> {
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_app_id("io.github.relative.fivetris")
+            .with_app_id("io.github.relativemodder.fivetris")
             .with_icon(icon)
             .with_title("Fivetris"),
         ..Default::default()
