@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use crate::app::AppState;
 use crate::app::actions::AppAction;
+use crate::core::game_loop::SoundEffect;
 use crate::core::input::{HorizontalDirection, InputRepeatState};
 use crate::core::piece::RotationCommand;
 
@@ -61,7 +62,9 @@ impl GameController {
                 }
                 let das_ms = state.game_loop.game.gravity.das_ms;
                 let das_cancel = state.game_loop.game.gravity.das_cancel;
-                state.game_loop.try_move_piece(-1, 0);
+                if state.game_loop.try_move_piece(-1, 0) {
+                    state.game_loop.pending_sounds.push(SoundEffect::Move);
+                }
                 self.repeat_state.press_horizontal(
                     HorizontalDirection::Left,
                     now,
@@ -80,7 +83,9 @@ impl GameController {
                 }
                 let das_ms = state.game_loop.game.gravity.das_ms;
                 let das_cancel = state.game_loop.game.gravity.das_cancel;
-                state.game_loop.try_move_piece(1, 0);
+                if state.game_loop.try_move_piece(1, 0) {
+                    state.game_loop.pending_sounds.push(SoundEffect::Move);
+                }
                 self.repeat_state.press_horizontal(
                     HorizontalDirection::Right,
                     now,
@@ -98,7 +103,9 @@ impl GameController {
                     return;
                 }
                 let sdd_ms = state.game_loop.game.gravity.sdd_ms;
-                state.game_loop.try_move_piece(0, 1);
+                if state.game_loop.try_move_piece(0, 1) {
+                    state.game_loop.pending_sounds.push(SoundEffect::Move);
+                }
                 self.repeat_state.press_soft_drop(now, sdd_ms);
             }
             AppAction::SoftDropRelease => self.repeat_state.release_soft_drop(),

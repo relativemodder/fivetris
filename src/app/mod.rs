@@ -356,6 +356,7 @@ impl eframe::App for FourTrisApp {
         let focused = ctx.input(|i| i.focused);
         if !focused {
             self.controller.clear_repeat_state();
+            self.state.ui_state.previous_keys.clear();
         }
 
         let actions = view::collect_actions(self, &ctx, now);

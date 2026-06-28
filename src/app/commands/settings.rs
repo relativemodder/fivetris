@@ -36,6 +36,7 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
             if let Some(pending) = app.state.ui_state.pending_config.clone() {
                 app.config = pending;
                 let rebuilt = FourTrisApp::apply_config_to_state(&mut app.state, &app.config);
+                app.audio_manager.set_volume(app.config.volume_percent);
                 app.save_config();
                 if rebuilt {
                     app.set_status("Applied settings and reset board");
@@ -46,6 +47,7 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
             if let Some(pending) = app.state.ui_state.pending_config.take() {
                 app.config = pending;
                 let rebuilt = FourTrisApp::apply_config_to_state(&mut app.state, &app.config);
+                app.audio_manager.set_volume(app.config.volume_percent);
                 app.save_config();
                 if rebuilt {
                     app.set_status("Applied settings and reset board");

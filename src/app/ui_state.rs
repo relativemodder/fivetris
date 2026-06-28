@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use crate::config::AppConfig;
 use crate::core::Cell;
 
@@ -17,6 +19,7 @@ pub struct UiState {
     pub pending_config: Option<AppConfig>,
     pub bag_edit_open: bool,
     pub hold_edit_open: bool,
+    pub previous_keys: HashSet<egui::Key>,
 }
 
 impl Default for UiState {
@@ -34,6 +37,7 @@ impl Default for UiState {
             pending_config: None,
             bag_edit_open: false,
             hold_edit_open: false,
+            previous_keys: HashSet::new(),
         }
     }
 }

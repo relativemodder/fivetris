@@ -380,9 +380,11 @@ pub fn draw_board(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Ve
     let ctrl = ui.input(|input| input.modifiers.ctrl);
     let primary_drag = response.drag_started_by(egui::PointerButton::Primary)
         || response.dragged_by(egui::PointerButton::Primary);
-    let secondary = response.clicked_by(egui::PointerButton::Secondary);
+    let secondary_drag = response.drag_started_by(egui::PointerButton::Secondary)
+        || response.dragged_by(egui::PointerButton::Secondary)
+        || response.clicked_by(egui::PointerButton::Secondary);
 
-    if primary_drag || secondary {
+    if primary_drag || secondary_drag {
         if let Some(pos) = response.interact_pointer_pos() {
             if let Some((cx, cy)) = pointer_to_cell(
                 pos,
@@ -392,10 +394,10 @@ pub fn draw_board(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Ve
             ) {
                 if cy < view.game.board.total_height() && cx < view.game.board.width {
                     if view.ui_state.highlight_mode {
-                        let alpha = if ctrl || secondary { 0 } else { EDIT_ALPHA };
+                        let alpha = if ctrl || secondary_drag { 0 } else { EDIT_ALPHA };
                         actions.push(AppAction::EditHighlightCell(cx as i32, cy as i32, alpha));
                     } else {
-                        let cell = if ctrl || secondary {
+                        let cell = if ctrl || secondary_drag {
                             Cell::Empty
                         } else {
                             view.ui_state.edit_color

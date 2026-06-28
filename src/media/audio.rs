@@ -133,8 +133,8 @@ impl AudioSink for RodioAudioManager {
             Ok(s) => s,
             Err(_) => return,
         };
-        let vol = self.volume.load(Ordering::Relaxed) as f32 / 100.0;
-        sink.set_volume(vol);
+        let linear = self.volume.load(Ordering::Relaxed) as f32 / 100.0;
+        sink.set_volume(linear * linear);
         if let Some(source) = Self::decode_sample(data) {
             let source = source.buffered();
             sink.append(source);

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
 use crate::app::actions::AppAction;
@@ -228,10 +229,13 @@ pub fn collect_keyboard_actions(
     now: Instant,
     config: &AppConfig,
     actions: &mut Vec<AppAction>,
+    previous_keys: &mut HashSet<egui::Key>,
 ) {
     ctx.input(|input| {
+        let keys_down = &input.keys_down;
+
         for binding in APP_KEY_BINDINGS {
-            collect_binding_action(input, binding, now, actions);
+            collect_binding_action(input, keys_down, previous_keys, binding, now, actions);
         }
 
         let bindings = &config.bindings;
@@ -326,12 +330,14 @@ pub fn collect_keyboard_actions(
         }
 
         for binding in gameplay_bindings {
-            collect_binding_action(input, binding, now, actions);
+            collect_binding_action(input, keys_down, previous_keys, binding, now, actions);
         }
 
         for &hard_drop_key in &bindings.hard_drop {
             collect_binding_action(
                 input,
+                keys_down,
+                previous_keys,
                 KeyBinding {
                     key_name: hard_drop_key,
                     trigger: Trigger::Press,
@@ -343,11 +349,15 @@ pub fn collect_keyboard_actions(
                 actions,
             );
         }
+
+        *previous_keys = keys_down.clone();
     });
 }
 
 fn collect_binding_action(
     input: &egui::InputState,
+    keys_down: &HashSet<egui::Key>,
+    previous_keys: &HashSet<egui::Key>,
     binding: KeyBinding,
     now: Instant,
     actions: &mut Vec<AppAction>,
@@ -358,9 +368,13 @@ fn collect_binding_action(
         return;
     }
 
+    let key = binding.key_name.egui_key();
+    let key_down = keys_down.contains(&key);
+    let was_down = previous_keys.contains(&key);
+
     let triggered = match binding.trigger {
-        Trigger::Press => input.key_pressed(binding.key_name.egui_key()),
-        Trigger::Release => input.key_released(binding.key_name.egui_key()),
+        Trigger::Press => key_down && !was_down,
+        Trigger::Release => !key_down && was_down,
     };
 
     if triggered {

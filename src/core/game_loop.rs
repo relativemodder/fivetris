@@ -255,7 +255,6 @@ impl GameLoop {
     pub fn try_move_piece(&mut self, dx: i32, dy: i32) -> bool {
         let success = try_move(&mut self.game, dx, dy);
         if success {
-            self.pending_sounds.push(SoundEffect::Move);
             if self.game.lock_delay.active {
                 self.game.lock_delay.timer_ms = 0;
                 self.game.lock_delay.moves += 1;

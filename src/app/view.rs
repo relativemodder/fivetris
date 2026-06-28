@@ -18,10 +18,11 @@ pub(crate) fn collect_actions(
     let mut actions = Vec::new();
 
     if app.state.ui_state.settings_open || ctx.egui_wants_keyboard_input() || app.screenshot_crop.is_some() {
+        app.state.ui_state.previous_keys.clear();
         return actions;
     }
 
-    collect_keyboard_actions(ctx, now, &app.config, &mut actions);
+    collect_keyboard_actions(ctx, now, &app.config, &mut actions, &mut app.state.ui_state.previous_keys);
     let shift_down = ctx.input(|input| input.modifiers.shift);
     if app.config.bindings.hold_with_shift && shift_down && !app.state.ui_state.shift_was_down {
         actions.push(AppAction::Hold);
