@@ -1,5 +1,5 @@
 # fivetris
-This is a Rust rewrite of [four-tris](https://github.com/fiorescarlatto/four-tris), an open source training tool for block-stacking games. Quickly explore different situations, test options, and "train freely in a Tetris-like environment"
+This is a Rust rewrite of [four-tris](https://github.com/fiorescarlatto/four-tris), an open source training tool for block-stacking games. You can simulate different situations, test options, and train freely in a Tetris-like environment.
 
 # Download
 
@@ -18,22 +18,13 @@ You can download the latest release from the [releases page](https://github.com/
 3. If not, describe the problem clearly and include the steps to reproduce it.
 
 ## Building
-- You will need a recent stable Rust toolchain with `cargo`.
+- You will need a recent stable Rust toolchain with cargo.
 - On Linux, make sure the ALSA development package is installed so audio can build correctly.
-- Run `cargo run --release` to start the application.
-- Run `cargo test` to execute the test suite.
+- Run `cargo run` to start the application.
 
 If you want to build the app into a standalone binary you can use `cargo build --release`.
 
-## Code
-
-The application is written in Rust with `eframe` and `egui`, and it uses embedded assets for fonts, textures, and sounds. The code is structured around the game core, rendering, platform helpers, configuration, and app state management.
-
-If you want to add a new feature or contribute in general, open an issue or a pull request.
-
-## Upstream
-
-Original project:
+## Original project
 
 - <https://github.com/fiorescarlatto/four-tris>
 
