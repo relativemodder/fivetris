@@ -12,7 +12,10 @@ pub(crate) fn replace_game_state(app: &mut FourTrisApp, game: GameState) {
                 static_sequence,
             )
         }
-        _ => QueueGenerator::new(app.state.game_loop.game.queue.mode, app.state.game_loop.game.queue.seed),
+        _ => QueueGenerator::new(
+            app.state.game_loop.game.queue.mode,
+            app.state.game_loop.game.queue.seed,
+        ),
     };
     app.state.game_loop.gravity_accum = 0;
     app.state.game_loop.pending_sounds.clear();
@@ -89,13 +92,15 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
             Err(error) => app.set_status(format!("Copy failed: {error}")),
         },
         AppAction::PasteState => match SystemClipboard::read_text() {
-            Ok(text) => match decode_json_state(&text).or_else(|_| decode_legacy_clipboard(&text)) {
-                Ok(game) => {
-                    replace_game_state(app, game);
-                    app.set_status("Pasted state from clipboard");
+            Ok(text) => {
+                match decode_json_state(&text).or_else(|_| decode_legacy_clipboard(&text)) {
+                    Ok(game) => {
+                        replace_game_state(app, game);
+                        app.set_status("Pasted state from clipboard");
+                    }
+                    Err(error) => app.set_status(format!("Paste failed: {error}")),
                 }
-                Err(error) => app.set_status(format!("Paste failed: {error}")),
-            },
+            }
             Err(error) => app.set_status(format!("Paste failed: {error}")),
         },
         AppAction::RequestScreenshot => {

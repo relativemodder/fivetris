@@ -41,37 +41,18 @@ pub fn draw_settings_window(
 
     egui::Window::new("Settings")
         .collapsible(false)
-        .resizable(false)
+        .resizable(true)
         .anchor(egui::Align2::CENTER_CENTER, egui::Vec2::ZERO)
-        .fixed_size(egui::vec2(560.0, 420.0))
+        .min_size(egui::vec2(560.0, 420.0))
         .show(ctx, |ui| {
+            let max_scroll_height = (ui.available_height() - 50.0).max(100.0);
             egui::ScrollArea::vertical()
-                .max_height(340.0)
+                .max_height(max_scroll_height)
                 .auto_shrink([false, false])
                 .show(ui, |ui| {
                     egui::Frame::NONE
                         .inner_margin(egui::Margin::symmetric(8, 4))
                         .show(ui, |ui| {
-                    ui.collapsing("Quick Help", |ui| {
-                        ui.label("F-row resets modes and runs utility actions:");
-                        ui.label(format!(
-                            "{} Training, {} Cheese, {} Four Wide, {} Perfect Clear, {} Master, {} Screenshot",
-                            cfg.bindings.reset_training.display_name(),
-                            cfg.bindings.reset_cheese.display_name(),
-                            cfg.bindings.reset_four_wide.display_name(),
-                            cfg.bindings.reset_perfect_clear.display_name(),
-                            cfg.bindings.reset_master.display_name(),
-                            cfg.bindings.screenshot.display_name(),
-                        ));
-                    ui.separator();
-                    ui.label("Drawing tools are always available in the sidebar.");
-                    ui.label("R restarts the current mode.");
-                    ui.label("If Shift-hold is enabled, tap Shift to hold. Otherwise use the Hold key from Controls.");
-                    ui.label("Undo/redo use Ctrl+Z and Ctrl+Y.");
-                    });
-
-                    ui.separator();
-
                     ui.checkbox(&mut cfg.show_ghost, "Show ghost piece");
 
                     let mut volume = i32::from(cfg.volume_percent);

@@ -65,6 +65,8 @@ fn main() -> eframe::Result<()> {
         viewport: egui::ViewportBuilder::default()
             .with_app_id("io.github.relativemodder.fivetris")
             .with_icon(icon)
+            .with_inner_size(egui::vec2(842.0, 650.0))
+            .with_min_inner_size(egui::vec2(842.0, 650.0))
             .with_title("Fivetris"),
         ..Default::default()
     };

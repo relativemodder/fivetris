@@ -278,14 +278,66 @@ fn render_highlights(
     }
 }
 
-fn overlay_banner(painter: &Painter, rect: Rect, text: &str, color: Color32) {
-    painter.text(
-        rect.center_top() + Vec2::new(0.0, 10.0),
-        Align2::CENTER_TOP,
-        text,
-        FontId::proportional(22.0),
-        color,
-    );
+fn overlay_status_stack(painter: &Painter, rect: Rect, view: &GameRenderView<'_>) {
+    let mut y = rect.top() + 10.0;
+
+    if view.paused {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            "PAUSED",
+            FontId::proportional(22.0),
+            view.style.text_color,
+        );
+        y += 28.0;
+    } else if view.game.stats.lost {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            "GAME OVER",
+            FontId::proportional(22.0),
+            Color32::RED,
+        );
+        y += 28.0;
+    }
+
+    if let Some(text) = &view.game.stats.attack_text {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            text,
+            FontId::proportional(18.0),
+            view.style.theme_colors.warning,
+        );
+        y += 23.0;
+    } else if view.game.stats.perfect_clear {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            "PERFECT CLEAR",
+            FontId::proportional(18.0),
+            view.style.theme_colors.success,
+        );
+        y += 23.0;
+    }
+
+    if let Some(text) = &view.game.stats.b2b_text {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            text,
+            FontId::proportional(18.0),
+            view.style.theme_colors.success,
+        );
+    } else if view.game.stats.b2b {
+        painter.text(
+            Pos2::new(rect.center().x, y),
+            Align2::CENTER_TOP,
+            "B2B",
+            FontId::proportional(18.0),
+            view.style.theme_colors.success,
+        );
+    }
 }
 
 pub fn board_rect(ui: &egui::Ui, game: &GameState) -> Rect {
@@ -364,18 +416,7 @@ pub fn draw_board(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Ve
         view.board_cell_size,
     );
 
-    if view.paused {
-        overlay_banner(&painter, response.rect, "PAUSED", view.style.text_color);
-    } else if view.game.stats.lost {
-        overlay_banner(&painter, response.rect, "GAME OVER", Color32::RED);
-    } else if view.game.stats.perfect_clear {
-        overlay_banner(
-            &painter,
-            response.rect,
-            "PERFECT CLEAR",
-            Color32::LIGHT_GREEN,
-        );
-    }
+    overlay_status_stack(&painter, response.rect, view);
 
     let ctrl = ui.input(|input| input.modifiers.ctrl);
     let primary_drag = response.drag_started_by(egui::PointerButton::Primary)

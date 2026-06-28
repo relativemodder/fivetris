@@ -1,4 +1,5 @@
 mod board_painter;
+mod components;
 mod settings_ui;
 mod sidebar;
 mod texture_atlas;
@@ -12,26 +13,14 @@ use crate::core::piece::{Cell, PieceState};
 use crate::core::{Board, GameState};
 
 pub use board_painter::{board_rect, draw_board};
+pub use components::{
+    COMPACT_CONTROL_PADDING, apply_global_style, btn, fa_btn, fa_icon_btn, fa_icon_btn_small,
+    styled_button, text_edit_singleline, with_control_padding,
+};
 pub use settings_ui::draw_settings_window;
 pub use sidebar::{draw_next_panel, draw_sidebar};
 pub use texture_atlas::{TextureAtlas, TextureError, load_texture_atlas, load_texture_atlas_bytes};
 pub use theme::ThemeColors;
-
-pub fn btn(ui: &mut egui::Ui, text: &str) -> egui::Response {
-    let saved = ui.style().spacing.button_padding;
-    ui.style_mut().spacing.button_padding = egui::vec2(20.0, 5.0);
-    let r = ui.button(text);
-    ui.style_mut().spacing.button_padding = saved;
-    r
-}
-
-pub fn fa_btn(ui: &mut egui::Ui, icon: char, text: &str) -> egui::Response {
-    let saved = ui.style().spacing.button_padding;
-    ui.style_mut().spacing.button_padding = egui::vec2(15.0, 5.0);
-    let r = ui.add(egui::Button::new(format!("{icon}  {text}")));
-    ui.style_mut().spacing.button_padding = saved;
-    r
-}
 
 pub const CELL_SIZE: f32 = 28.0;
 pub const GAP: f32 = 1.0;

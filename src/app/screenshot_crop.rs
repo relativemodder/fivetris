@@ -2,7 +2,7 @@ use egui::load::SizedTexture;
 use egui::{ColorImage, TextureHandle, TextureOptions};
 use image::RgbaImage;
 
-use crate::render::btn;
+use crate::render::{btn, styled_button};
 
 pub(crate) struct ScreenshotCropState {
     pub(crate) image: RgbaImage,
@@ -192,11 +192,10 @@ pub(crate) fn render_screenshot_crop_window(
                     action = Some(ScreenshotCropAction::UseFullImage);
                 }
                 let can_crop = crop.selected_pixel_rect().is_some();
-                let saved = ui.style().spacing.button_padding;
-                ui.style_mut().spacing.button_padding = egui::vec2(5.0, 5.0);
-                let resp = ui.add_enabled(can_crop, egui::Button::new("Crop && Import"));
-                ui.style_mut().spacing.button_padding = saved;
-                if resp.clicked() {
+                let resp = ui.add_enabled_ui(can_crop, |ui| {
+                    styled_button(ui, egui::Button::new("Crop && Import"))
+                });
+                if resp.inner.clicked() {
                     action = Some(ScreenshotCropAction::UseSelection);
                 }
                 if btn(ui, "Cancel").clicked() {

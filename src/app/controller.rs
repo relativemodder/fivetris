@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use crate::app::AppState;
 use crate::app::actions::AppAction;
 use crate::core::game_loop::SoundEffect;
+use crate::core::GameMode;
 use crate::core::input::{HorizontalDirection, InputRepeatState};
 use crate::core::piece::RotationCommand;
 
@@ -29,6 +30,16 @@ impl GameController {
         }
     }
 
+    fn next_round_robin_mode(mode: GameMode) -> GameMode {
+        match mode {
+            GameMode::Training => GameMode::Cheese,
+            GameMode::Cheese => GameMode::FourWide,
+            GameMode::FourWide => GameMode::PerfectClear,
+            GameMode::PerfectClear => GameMode::Master,
+            GameMode::Master | GameMode::Edit => GameMode::Training,
+        }
+    }
+
     pub fn dispatch(&mut self, state: &mut AppState, action: AppAction) {
         match action {
             AppAction::CopyState
@@ -52,6 +63,12 @@ impl GameController {
             }
             AppAction::ResetCurrent => {
                 let mode = state.game_loop.game.mode;
+                state.game_loop.reset(mode);
+                state.paused = false;
+                self.clear_repeat_state();
+            }
+            AppAction::CycleMode => {
+                let mode = Self::next_round_robin_mode(state.game_loop.game.mode);
                 state.game_loop.reset(mode);
                 state.paused = false;
                 self.clear_repeat_state();
@@ -245,6 +262,34 @@ mod tests {
             ui_state: UiState::default(),
             paused: false,
         }
+    }
+
+    #[test]
+    fn cycle_mode_uses_round_robin_order() {
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::Training),
+            GameMode::Cheese
+        );
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::Cheese),
+            GameMode::FourWide
+        );
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::FourWide),
+            GameMode::PerfectClear
+        );
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::PerfectClear),
+            GameMode::Master
+        );
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::Master),
+            GameMode::Training
+        );
+        assert_eq!(
+            GameController::next_round_robin_mode(GameMode::Edit),
+            GameMode::Training
+        );
     }
 
     #[test]

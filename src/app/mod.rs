@@ -28,12 +28,13 @@ use crate::core::{
 };
 use crate::media::audio::{AudioCommand, AudioManagerHandle, AudioSink, RodioAudioManager};
 use crate::platform::{
-    PlatformEvent, ScreenshotAnalysisConfig, ScreenshotPortalService, ScreenshotRequester,
-    SystemClipboard, analyze_board_image, import_board_from_analysis, screenshot_analyzer,
+    PlatformEvent, PreferredColorScheme, ScreenshotAnalysisConfig, ScreenshotPortalService,
+    ScreenshotRequester, SystemClipboard, analyze_board_image, import_board_from_analysis,
+    screenshot_analyzer,
 };
 use crate::render::{
-    GameRenderView, RenderStyle, TextureAtlas, draw_board, draw_next_panel, draw_settings_window,
-    draw_sidebar, fa_btn, load_texture_atlas, load_texture_atlas_bytes,
+    GameRenderView, RenderStyle, TextureAtlas, apply_global_style, draw_board, draw_next_panel,
+    draw_settings_window, draw_sidebar, fa_btn, load_texture_atlas, load_texture_atlas_bytes,
 };
 use crate::resources;
 
@@ -67,6 +68,7 @@ pub struct FourTrisApp {
     last_time: Instant,
     screenshot_crop: Option<ScreenshotCropState>,
     waiting_for_screenshot: bool,
+    preferred_color_scheme: Option<PreferredColorScheme>,
     bag_edit_text: String,
     hold_edit_text: String,
     #[cfg(target_os = "windows")]
@@ -116,6 +118,7 @@ impl Default for FourTrisApp {
             last_time: Instant::now(),
             screenshot_crop: None,
             waiting_for_screenshot: false,
+            preferred_color_scheme: crate::platform::preferred_color_scheme(),
             bag_edit_text: String::new(),
             hold_edit_text: String::new(),
             #[cfg(target_os = "windows")]
@@ -147,13 +150,20 @@ impl FourTrisApp {
         match self.config.theme {
             ThemeMode::Light => egui::Theme::Light,
             ThemeMode::Dark => egui::Theme::Dark,
-            ThemeMode::Auto => ctx.system_theme().unwrap_or(egui::Theme::Dark),
+            ThemeMode::Auto => {
+                ctx.system_theme()
+                    .unwrap_or_else(|| match self.preferred_color_scheme {
+                        Some(PreferredColorScheme::Light) => egui::Theme::Light,
+                        Some(PreferredColorScheme::Dark) | None => egui::Theme::Dark,
+                    })
+            }
         }
     }
 
     fn apply_theme(&self, ctx: &egui::Context) -> egui::Theme {
         let theme = self.resolve_theme(ctx);
         ctx.set_theme(theme);
+        apply_global_style(ctx, theme);
         theme
     }
 

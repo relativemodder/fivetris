@@ -34,6 +34,40 @@ pub enum PlatformEvent {
     ScreenshotReady(Result<ScreenshotImage, ScreenshotError>),
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PreferredColorScheme {
+    Light,
+    Dark,
+}
+
+#[cfg(target_os = "linux")]
+pub fn preferred_color_scheme() -> Option<PreferredColorScheme> {
+    let output = std::process::Command::new("gsettings")
+        .args(["get", "org.gnome.desktop.interface", "color-scheme"])
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    parse_gsettings_color_scheme(std::str::from_utf8(&output.stdout).ok()?)
+}
+
+#[cfg(not(target_os = "linux"))]
+pub fn preferred_color_scheme() -> Option<PreferredColorScheme> {
+    None
+}
+
+#[cfg(target_os = "linux")]
+fn parse_gsettings_color_scheme(value: &str) -> Option<PreferredColorScheme> {
+    match value.trim().trim_matches('\'') {
+        "prefer-dark" => Some(PreferredColorScheme::Dark),
+        "prefer-light" => Some(PreferredColorScheme::Light),
+        _ => None,
+    }
+}
+
 #[cfg(target_os = "windows")]
 pub fn set_window_dark_mode(hwnd: *mut std::ffi::c_void, dark: bool) {
     #[link(name = "dwmapi")]
@@ -78,6 +112,29 @@ pub fn set_window_dark_mode(hwnd: *mut std::ffi::c_void, dark: bool) {
 
         SendMessageW(hwnd, WM_NCACTIVATE, 0, 0);
         SendMessageW(hwnd, WM_NCACTIVATE, 1, 0);
-        RedrawWindow(hwnd, std::ptr::null(), std::ptr::null_mut(), RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW);
+        RedrawWindow(
+            hwnd,
+            std::ptr::null(),
+            std::ptr::null_mut(),
+            RDW_FRAME | RDW_INVALIDATE | RDW_UPDATENOW,
+        );
+    }
+}
+
+#[cfg(all(test, target_os = "linux"))]
+mod tests {
+    use super::{PreferredColorScheme, parse_gsettings_color_scheme};
+
+    #[test]
+    fn parses_gsettings_color_scheme() {
+        assert_eq!(
+            parse_gsettings_color_scheme("'prefer-dark'\n"),
+            Some(PreferredColorScheme::Dark)
+        );
+        assert_eq!(
+            parse_gsettings_color_scheme("'prefer-light'\n"),
+            Some(PreferredColorScheme::Light)
+        );
+        assert_eq!(parse_gsettings_color_scheme("'default'\n"), None);
     }
 }

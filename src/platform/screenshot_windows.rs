@@ -81,8 +81,12 @@ fn launch_ms_screenclip() -> bool {
         let op = wide("open");
         let uri = wide("ms-screenclip:");
         let r = ffi::ShellExecuteW(
-            ptr::null_mut(), op.as_ptr(), uri.as_ptr(),
-            ptr::null(), ptr::null(), ffi::SW_SHOWNORMAL,
+            ptr::null_mut(),
+            op.as_ptr(),
+            uri.as_ptr(),
+            ptr::null(),
+            ptr::null(),
+            ffi::SW_SHOWNORMAL,
         );
         (r as isize) > 32
     }
@@ -103,8 +107,14 @@ fn read_clipboard_dib() -> Result<Option<ScreenshotImage>, ScreenshotError> {
             return Ok(None);
         }
         match dib_to_image(handle) {
-            Ok(img) => { ffi::CloseClipboard(); Ok(Some(img)) }
-            Err(e) => { ffi::CloseClipboard(); Err(e) }
+            Ok(img) => {
+                ffi::CloseClipboard();
+                Ok(Some(img))
+            }
+            Err(e) => {
+                ffi::CloseClipboard();
+                Err(e)
+            }
         }
     }
 }
@@ -125,7 +135,10 @@ unsafe fn dib_to_image(handle: ffi::HANDLE) -> Result<ScreenshotImage, Screensho
     let hdr = unsafe { &*(ptr as *const ffi::BITMAPINFOHEADER) };
     if hdr.biBitCount != 32 {
         unsafe { ffi::GlobalUnlock(handle) };
-        return Err(ScreenshotError::Clipboard(format!("{}bpp unsupported", hdr.biBitCount)));
+        return Err(ScreenshotError::Clipboard(format!(
+            "{}bpp unsupported",
+            hdr.biBitCount
+        )));
     }
 
     let w = hdr.biWidth as u32;
@@ -148,13 +161,22 @@ unsafe fn dib_to_image(handle: ffi::HANDLE) -> Result<ScreenshotImage, Screensho
     }
 
     unsafe { ffi::GlobalUnlock(handle) };
-    Ok(ScreenshotImage { width: w, height: h, rgba })
+    Ok(ScreenshotImage {
+        width: w,
+        height: h,
+        rgba,
+    })
 }
 
 fn gdi_capture() -> Result<ScreenshotImage, ScreenshotError> {
     unsafe {
         let display = wide("DISPLAY");
-        let dc = ffi::CreateDCW(display.as_ptr(), ptr::null_mut(), ptr::null_mut(), ptr::null_mut());
+        let dc = ffi::CreateDCW(
+            display.as_ptr(),
+            ptr::null_mut(),
+            ptr::null_mut(),
+            ptr::null_mut(),
+        );
         if dc.is_null() {
             return Err(ScreenshotError::Capture("CreateDCW".into()));
         }
@@ -197,7 +219,16 @@ fn gdi_capture() -> Result<ScreenshotImage, ScreenshotError> {
         bmi.bmiHeader.biCompression = ffi::BI_RGB;
 
         let mut pixels = vec![0u8; (w * h) as usize * 4];
-        if ffi::GetDIBits(mem, bm, 0, h as u32, pixels.as_mut_ptr() as *mut std::ffi::c_void, &mut bmi, ffi::DIB_RGB_COLORS) == 0 {
+        if ffi::GetDIBits(
+            mem,
+            bm,
+            0,
+            h as u32,
+            pixels.as_mut_ptr() as *mut std::ffi::c_void,
+            &mut bmi,
+            ffi::DIB_RGB_COLORS,
+        ) == 0
+        {
             ffi::SelectObject(mem, old);
             ffi::DeleteObject(bm);
             ffi::DeleteDC(mem);
@@ -214,7 +245,11 @@ fn gdi_capture() -> Result<ScreenshotImage, ScreenshotError> {
         ffi::DeleteDC(mem);
         ffi::DeleteDC(dc);
 
-        Ok(ScreenshotImage { width: w as u32, height: h as u32, rgba: pixels })
+        Ok(ScreenshotImage {
+            width: w as u32,
+            height: h as u32,
+            rgba: pixels,
+        })
     }
 }
 
@@ -259,7 +294,14 @@ mod ffi {
     }
 
     unsafe extern "system" {
-        pub fn ShellExecuteW(HWND: LPVOID, op: *const u16, file: *const u16, params: *const u16, dir: *const u16, show: i32) -> HANDLE;
+        pub fn ShellExecuteW(
+            HWND: LPVOID,
+            op: *const u16,
+            file: *const u16,
+            params: *const u16,
+            dir: *const u16,
+            show: i32,
+        ) -> HANDLE;
         pub fn OpenClipboard(hwnd: LPVOID) -> BOOL;
         pub fn CloseClipboard() -> BOOL;
         pub fn GetClipboardData(fmt: UINT) -> HANDLE;
@@ -268,14 +310,37 @@ mod ffi {
         pub fn GlobalUnlock(mem: HANDLE) -> BOOL;
         pub fn GlobalSize(mem: HANDLE) -> usize;
         pub fn Sleep(ms: u32);
-        pub fn CreateDCW(driver: *const u16, device: LPVOID, output: LPVOID, init: LPVOID) -> HANDLE;
+        pub fn CreateDCW(
+            driver: *const u16,
+            device: LPVOID,
+            output: LPVOID,
+            init: LPVOID,
+        ) -> HANDLE;
         pub fn CreateCompatibleDC(dc: HANDLE) -> HANDLE;
         pub fn CreateCompatibleBitmap(dc: HANDLE, w: i32, h: i32) -> HANDLE;
         pub fn SelectObject(dc: HANDLE, obj: HANDLE) -> HANDLE;
         pub fn DeleteDC(dc: HANDLE) -> BOOL;
         pub fn DeleteObject(obj: HANDLE) -> BOOL;
-        pub fn BitBlt(dst: HANDLE, x: i32, y: i32, w: i32, h: i32, src: HANDLE, sx: i32, sy: i32, rop: DWORD) -> BOOL;
-        pub fn GetDIBits(dc: HANDLE, bm: HANDLE, start: UINT, lines: UINT, bits: LPVOID, info: *mut BITMAPINFO, usage: UINT) -> i32;
+        pub fn BitBlt(
+            dst: HANDLE,
+            x: i32,
+            y: i32,
+            w: i32,
+            h: i32,
+            src: HANDLE,
+            sx: i32,
+            sy: i32,
+            rop: DWORD,
+        ) -> BOOL;
+        pub fn GetDIBits(
+            dc: HANDLE,
+            bm: HANDLE,
+            start: UINT,
+            lines: UINT,
+            bits: LPVOID,
+            info: *mut BITMAPINFO,
+            usage: UINT,
+        ) -> i32;
         pub fn GetDeviceCaps(dc: HANDLE, index: i32) -> i32;
     }
 }

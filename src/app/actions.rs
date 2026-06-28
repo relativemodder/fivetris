@@ -7,6 +7,7 @@ pub enum AppAction {
     TogglePause,
     Reset(GameMode),
     ResetCurrent,
+    CycleMode,
     CopyState,
     PasteState,
     RequestScreenshot,

@@ -1,9 +1,10 @@
-use egui::{Color32, CornerRadius, Painter, Pos2, Rect, Vec2};
+use egui::{Color32, CornerRadius, Painter, Pos2, Rect, RichText, Stroke, Vec2};
 
 use crate::app::actions::AppAction;
 use crate::core::piece::{Cell, Rotation, Tetromino, cell_from_piece, piece_name, piece_shape};
 
 use super::{GameRenderView, cell_color, cell_texture_index, textured_cell_tint};
+use crate::render::{COMPACT_CONTROL_PADDING, with_control_padding};
 
 fn draw_mini_cell(painter: &Painter, pos: Pos2, size: f32, color: Color32, corner_radius: u8) {
     if color.a() == 0 {
@@ -70,26 +71,44 @@ fn render_stats(ui: &mut egui::Ui, view: &GameRenderView<'_>) {
         ui.label(format!("Damage: {}", stats.damage));
         ui.label(format!("Combo: {}", stats.combo));
         ui.label(format!("Moves: {}", stats.moves));
-        if stats.b2b {
-            ui.colored_label(view.style.theme_colors.success, "B2B");
-        }
-        if let Some(text) = &stats.attack_text {
-            ui.colored_label(view.style.theme_colors.warning, text);
-        }
-        if let Some(text) = &stats.b2b_text {
-            ui.colored_label(view.style.theme_colors.success, text);
-        }
+    });
+}
+
+fn keycap(ui: &mut egui::Ui, text: &str) {
+    egui::Frame::NONE
+        .fill(ui.visuals().widgets.inactive.weak_bg_fill)
+        .stroke(Stroke::new(
+            0.0,
+            ui.visuals().widgets.inactive.bg_stroke.color,
+        ))
+        .corner_radius(CornerRadius::same(4))
+        .inner_margin(egui::Margin::symmetric(8, 0))
+        .show(ui, |ui| {
+            ui.label(RichText::new(text).monospace().size(13.0));
+        });
+}
+
+fn key_hint(ui: &mut egui::Ui, key: &str, label: &str) {
+    ui.horizontal(|ui| {
+        keycap(ui, key);
+        ui.label(label);
     });
 }
 
 fn render_quick_help(ui: &mut egui::Ui) {
-    ui.label("Quick Help");
-    ui.separator();
-    ui.small("F1 Training  F2 Cheese  F3 Four Wide");
-    ui.small("F4 Perfect Clear  F5 Master  F6 Screenshot");
-    ui.small("R Restart current");
-    ui.add_space(4.0);
-    ui.small("Ctrl+Z Undo  Ctrl+Y Redo");
+    with_control_padding(ui, COMPACT_CONTROL_PADDING, |ui| {
+        ui.collapsing("Quick Help", |ui| {
+            key_hint(ui, "F1", "Training");
+            key_hint(ui, "F2", "Cheese");
+            key_hint(ui, "F3", "Four Wide");
+            key_hint(ui, "F4", "Perfect Clear");
+            key_hint(ui, "F5", "Master");
+            key_hint(ui, "F6", "Screenshot");
+            key_hint(ui, "R", "Restart current");
+            key_hint(ui, "Ctrl+Z", "Undo");
+            key_hint(ui, "Ctrl+Y", "Redo");
+        });
+    });
 }
 
 fn render_paint_palette(
@@ -97,8 +116,10 @@ fn render_paint_palette(
     view: &GameRenderView<'_>,
     actions: &mut Vec<AppAction>,
 ) {
-    ui.label("COLOR");
     ui.separator();
+    ui.add_space(5.0);
+    ui.label(RichText::new("Drawing").size(15.0));
+    ui.add_space(5.0);
 
     let color_size = 18.0;
     let colors = [
@@ -116,9 +137,9 @@ fn render_paint_palette(
         for (cell, color) in &colors {
             let selected = *cell == view.ui_state.edit_color;
             let stroke = if selected {
-                egui::Stroke::new(2.0, egui::Color32::WHITE)
+                egui::Stroke::new(2.0, if ui.visuals().dark_mode { egui::Color32::WHITE } else { egui::Color32::BLACK })
             } else {
-                egui::Stroke::new(1.0, view.style.box_color)
+                egui::Stroke::new(1.0, if ui.visuals().dark_mode { view.style.box_color } else { egui::Color32::WHITE })
             };
             let (rect, response) =
                 ui.allocate_exact_size(egui::vec2(color_size, color_size), egui::Sense::click());
@@ -136,53 +157,51 @@ fn render_paint_palette(
         }
     });
 
-    ui.add_space(4.0);
+    ui.add_space(10.0);
 
-    if super::btn(ui, "H-LIGHT").clicked() {
+    let mut highlight_mode = view.ui_state.highlight_mode;
+    if ui.checkbox(&mut highlight_mode, "Highlight mode").changed() {
         actions.push(AppAction::ToggleHighlightMode);
     }
 
     if view.ui_state.highlight_mode {
-        ui.colored_label(view.style.theme_colors.success, "Highlight mode ON");
         if super::btn(ui, "CLEAR").clicked() {
             actions.push(AppAction::ClearHighlight);
         }
     }
 
     ui.add_space(4.0);
+
     let mut auto_color = view.game.auto_color;
-    if ui.checkbox(&mut auto_color, "AUTOCOLR").changed() {
+    if ui.checkbox(&mut auto_color, "Auto-coloring").changed() {
         actions.push(AppAction::ToggleAutoColor(auto_color));
     }
 
+    ui.add_space(4.0);
+
     let mut auto_lock = view.game.auto_lock_on_ground;
-    if ui.checkbox(&mut auto_lock, "AUTOLOCK").changed() {
+    if ui.checkbox(&mut auto_lock, "Piece auto-locking").changed() {
         actions.push(AppAction::ToggleAutoLockOnGround(auto_lock));
     }
 
+    ui.add_space(5.0);
     ui.separator();
 }
 
 pub fn draw_sidebar(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Vec<AppAction>) {
-    ui.vertical(|ui| {
-        ui.label(format!("Mode: {}", view.mode_name));
-        if view.paused {
-            ui.colored_label(view.style.theme_colors.warning, "PAUSED");
-        }
-        ui.separator();
-
+    egui::ScrollArea::vertical().id_salt("sidebar").show(ui, |ui| {
         if let Some(held) = view.game.hold.piece {
             ui.horizontal(|ui| {
                 egui::Frame::NONE
-                    .inner_margin(egui::Margin::symmetric(0, 5))
+                    .inner_margin(egui::Margin::symmetric(0, 9))
                     .show(ui, |ui| {
                         ui.label("HOLD");
                     });
-                if super::btn(ui, "Edit hold").clicked() {
+                ui.add_space(4.0);
+                if super::fa_icon_btn_small(ui, '\u{f303}', "Edit hold").clicked() {
                     actions.push(AppAction::StartHoldEdit(piece_name(held).to_string()));
                 }
             });
-            ui.separator();
             let (_, painter) =
                 ui.allocate_painter(egui::Vec2::new(80.0, 55.0), egui::Sense::hover());
 
@@ -210,18 +229,19 @@ pub fn draw_sidebar(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut 
 }
 
 pub fn draw_next_panel(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Vec<AppAction>) {
-    ui.vertical(|ui| {
+    egui::ScrollArea::vertical().id_salt("next_panel").show(ui, |ui| {
         ui.horizontal(|ui| {
             egui::Frame::NONE
-                .inner_margin(egui::Margin::symmetric(0, 5))
+                .inner_margin(egui::Margin::symmetric(0, 9))
                 .show(ui, |ui| {
                     ui.label("NEXT");
                 });
-            if super::btn(ui, "Edit bag").clicked() {
+            ui.add_space(4.0);
+            if super::fa_icon_btn_small(ui, '\u{f303}', "Edit bag").clicked() {
                 actions.push(AppAction::StartBagEdit);
             }
         });
-        ui.separator();
+        ui.add_space(2.0);
         for piece in view
             .game
             .queue
@@ -242,7 +262,7 @@ pub fn draw_next_panel(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &m
                 ),
                 view.preview_cell_size,
             );
-            ui.add_space(4.0);
+            ui.add_space(2.0);
         }
     });
 }
