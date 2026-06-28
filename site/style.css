@@ -1,0 +1,110 @@
+@font-face {
+    font-family: Inter;
+    src: url(fonts/Inter.ttf) format(truetype);
+    font-display: swap;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        Helvetica, Arial, sans-serif;
+    background: #2f3136;
+    color: #fff;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+header {
+    text-align: center;
+    padding: 3rem 1rem 1rem;
+}
+
+.logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 12px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+}
+
+.subtitle {
+    color: #bbb;
+    font-size: 1.1rem;
+}
+
+main {
+    max-width: 640px;
+    padding: 0 1rem;
+    text-align: center;
+}
+
+.hero {
+    margin: 2rem 0;
+}
+
+.screenshot {
+    width: 100%;
+}
+
+.download {
+    margin-top: 1.5rem;
+}
+
+.btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    background: white;
+    color: black;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.btn:hover {
+    background: #bfbfbf;
+}
+
+.os {
+    display: block;
+    margin-top: 0.4rem;
+    color: #888;
+    font-size: 0.85rem;
+}
+
+.info {
+    color: #ccc;
+    font-size: 1.05rem;
+    margin: 2rem 0;
+}
+
+.info a {
+    color: #7fffff;
+}
+
+footer {
+    padding: 2rem 0 3rem;
+}
+
+footer a {
+    color: #888;
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+footer a:hover {
+    color: #fff;
+}
