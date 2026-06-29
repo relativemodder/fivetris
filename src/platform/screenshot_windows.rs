@@ -8,10 +8,6 @@ use crossbeam_channel::Sender;
 
 use super::{PlatformEvent, ScreenshotImage, ScreenshotRequester};
 
-pub trait ScreenshotRequester {
-    fn request_interactive_capture(&self);
-}
-
 #[derive(Debug, Clone)]
 pub enum ScreenshotError {
     Portal(String),
