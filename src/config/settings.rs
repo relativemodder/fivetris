@@ -197,15 +197,40 @@ impl AppConfig {
     }
 
     pub fn load_from_path(path: &Path) -> Result<Self, io::Error> {
-        match fs::read_to_string(path) {
-            Ok(raw) => {
-                let mut config: Self = serde_json::from_str(&raw)
-                    .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-                config.normalize();
-                Ok(config)
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            match fs::read_to_string(path) {
+                Ok(raw) => {
+                    let mut config: Self = serde_json::from_str(&raw)
+                        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+                    config.normalize();
+                    Ok(config)
+                }
+                Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
+                Err(error) => Err(error),
             }
-            Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(Self::default()),
-            Err(error) => Err(error),
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let key = path.to_string_lossy();
+            let storage = web_sys::window()
+                .and_then(|w| w.local_storage().ok())
+                .flatten()
+                .ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::Unsupported, "localStorage unavailable")
+                })?;
+            match storage
+                .get_item(&key)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")))?
+            {
+                Some(raw) => {
+                    let mut config: Self = serde_json::from_str(&raw)
+                        .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
+                    config.normalize();
+                    Ok(config)
+                }
+                None => Ok(Self::default()),
+            }
         }
     }
 
@@ -214,14 +239,31 @@ impl AppConfig {
     }
 
     pub fn save_to_path(&self, path: &Path) -> Result<(), io::Error> {
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)?;
-        }
         let mut normalized = self.clone();
         normalized.normalize();
         let raw = serde_json::to_string_pretty(&normalized)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, error))?;
-        fs::write(path, raw)
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            if let Some(parent) = path.parent() {
+                fs::create_dir_all(parent)?;
+            }
+            fs::write(path, raw)
+        }
+        #[cfg(target_arch = "wasm32")]
+        {
+            let key = path.to_string_lossy();
+            let storage = web_sys::window()
+                .and_then(|w| w.local_storage().ok())
+                .flatten()
+                .ok_or_else(|| {
+                    io::Error::new(io::ErrorKind::Unsupported, "localStorage unavailable")
+                })?;
+            storage
+                .set_item(&key, &raw)
+                .map_err(|e| io::Error::new(io::ErrorKind::Other, format!("{e:?}")))?;
+            Ok(())
+        }
     }
 
     fn normalize(&mut self) {

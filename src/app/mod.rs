@@ -2,18 +2,20 @@ pub mod actions;
 mod commands;
 pub mod controller;
 mod dialogs;
+#[cfg(not(target_arch = "wasm32"))]
 mod screenshot_crop;
 pub mod ui_state;
 mod view;
+#[cfg(test)]
+mod test;
 
-use std::time::{Duration, Instant};
+use web_time::{Duration, Instant};
 
-use crossbeam_channel::Receiver;
 use egui::{ColorImage, TextureHandle, TextureOptions};
-use image::RgbaImage;
 
 use self::controller::GameController;
 use self::dialogs::{render_bag_edit_dialog, render_hold_edit_dialog};
+#[cfg(not(target_arch = "wasm32"))]
 use self::screenshot_crop::{ScreenshotCropAction, ScreenshotCropState};
 use self::ui_state::{AppAction, UiState};
 use crate::config::{AppConfig, PersistedBagMode, ThemeMode, load_static_queue};
@@ -28,10 +30,13 @@ use crate::core::{
 };
 use crate::media::audio::{AudioCommand, AudioManagerHandle, AudioSink, RodioAudioManager};
 use crate::platform::{
-    PlatformEvent, PreferredColorScheme, ScreenshotAnalysisConfig, ScreenshotPortalService,
-    ScreenshotRequester, SystemClipboard, analyze_board_image, import_board_from_analysis,
-    screenshot_analyzer,
+    PreferredColorScheme, ScreenshotAnalysisConfig, SystemClipboard, analyze_board_image,
+    import_board_from_analysis,
 };
+#[cfg(not(target_arch = "wasm32"))]
+use crate::platform::screenshot_analyzer;
+#[cfg(not(target_arch = "wasm32"))]
+use crate::platform::{PlatformEvent, ScreenshotPortalService, ScreenshotRequester};
 use crate::render::{
     GameRenderView, RenderStyle, TextureAtlas, apply_global_style, draw_board, draw_next_panel,
     draw_settings_window, draw_sidebar, fa_btn, load_texture_atlas, load_texture_atlas_bytes,
@@ -60,18 +65,22 @@ pub struct FourTrisApp {
     audio_manager: RodioAudioManager,
     audio_handle: AudioManagerHandle,
     audio_commands: crossbeam_channel::Receiver<AudioCommand>,
-    platform_events: Receiver<PlatformEvent>,
+    #[cfg(not(target_arch = "wasm32"))]
+    platform_events: crossbeam_channel::Receiver<PlatformEvent>,
+    #[cfg(not(target_arch = "wasm32"))]
     screenshot_service: ScreenshotPortalService,
     texture_atlas: Option<TextureAtlas>,
     texture_handle: Option<TextureHandle>,
     loaded_texture_name: Option<String>,
     last_time: Instant,
+    #[cfg(not(target_arch = "wasm32"))]
     screenshot_crop: Option<ScreenshotCropState>,
+    #[cfg(not(target_arch = "wasm32"))]
     waiting_for_screenshot: bool,
     preferred_color_scheme: Option<PreferredColorScheme>,
     bag_edit_text: String,
     hold_edit_text: String,
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(target_arch = "wasm32")))]
     last_dark_mode: Option<bool>,
 }
 
@@ -94,15 +103,18 @@ impl Default for FourTrisApp {
         };
         state.game_loop.spawn_next();
         FourTrisApp::apply_config_to_state(&mut state, &config);
-        let (platform_tx, platform_events) = crossbeam_channel::unbounded();
-        let screenshot_service = match ScreenshotPortalService::new(platform_tx.clone()) {
-            Ok(service) => service,
-            Err(_) => ScreenshotPortalService::unavailable(platform_tx),
-        };
         let audio_manager =
             RodioAudioManager::load_default_audio_assets(&resources::data_audio_dir());
         let (audio_handle, audio_commands) = RodioAudioManager::command_channel();
         audio_manager.set_volume(config.volume_percent);
+        #[cfg(not(target_arch = "wasm32"))]
+        let (platform_tx, platform_events) = crossbeam_channel::unbounded();
+        #[cfg(not(target_arch = "wasm32"))]
+        let screenshot_service = match ScreenshotPortalService::new(platform_tx.clone()) {
+            Ok(service) => service,
+            Err(_) => ScreenshotPortalService::unavailable(platform_tx),
+        };
+        #[allow(unused_mut)]
         let mut app = FourTrisApp {
             state,
             config,
@@ -110,20 +122,25 @@ impl Default for FourTrisApp {
             audio_manager,
             audio_handle,
             audio_commands,
+            #[cfg(not(target_arch = "wasm32"))]
             platform_events,
+            #[cfg(not(target_arch = "wasm32"))]
             screenshot_service,
             texture_atlas: None,
             texture_handle: None,
             loaded_texture_name: None,
             last_time: Instant::now(),
+            #[cfg(not(target_arch = "wasm32"))]
             screenshot_crop: None,
+            #[cfg(not(target_arch = "wasm32"))]
             waiting_for_screenshot: false,
             preferred_color_scheme: crate::platform::preferred_color_scheme(),
             bag_edit_text: String::new(),
             hold_edit_text: String::new(),
-            #[cfg(target_os = "windows")]
+            #[cfg(all(target_os = "windows", not(target_arch = "wasm32")))]
             last_dark_mode: None,
         };
+        #[cfg(not(target_arch = "wasm32"))]
         if !app.screenshot_service.is_available() {
             app.set_status("Screenshot service unavailable");
         }
@@ -132,6 +149,7 @@ impl Default for FourTrisApp {
 }
 
 impl FourTrisApp {
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn request_interactive_capture(&self) {
         self.screenshot_service.request_interactive_capture();
     }
@@ -167,7 +185,7 @@ impl FourTrisApp {
         theme
     }
 
-    #[cfg(target_os = "windows")]
+    #[cfg(all(target_os = "windows", not(target_arch = "wasm32")))]
     fn apply_dark_mode(&mut self, frame: &eframe::Frame, theme: egui::Theme) {
         let dark = theme == egui::Theme::Dark;
         if self.last_dark_mode == Some(dark) {
@@ -283,20 +301,10 @@ impl FourTrisApp {
 
 #[cfg(test)]
 mod tests {
-    use super::{AppState, FourTrisApp, UiState};
+    use super::FourTrisApp;
+    use crate::app::test::test_state;
     use crate::config::{AppConfig, PersistedBagMode};
-    use crate::core::game_loop::GameLoop;
-    use crate::core::{BagMode, GameMode};
-
-    fn test_state() -> AppState {
-        let mut game_loop = GameLoop::new(GameMode::Training, BagMode::SevenBag, 0, true);
-        game_loop.spawn_next();
-        AppState {
-            game_loop,
-            ui_state: UiState::default(),
-            paused: false,
-        }
-    }
+    use crate::core::BagMode;
 
     #[test]
     fn apply_config_to_state_updates_runtime_fields() {
@@ -356,11 +364,13 @@ mod tests {
 }
 
 impl eframe::App for FourTrisApp {
+    #[allow(unused_variables)]
     fn ui(&mut self, app_ui: &mut egui::Ui, frame: &mut eframe::Frame) {
         let ctx = app_ui.ctx().clone();
         let _theme = self.apply_theme(&ctx);
-        #[cfg(target_os = "windows")]
+        #[cfg(all(target_os = "windows", not(target_arch = "wasm32")))]
         self.apply_dark_mode(frame, _theme);
+        #[cfg(not(target_arch = "wasm32"))]
         commands::poll_platform_events(self);
 
         let now = Instant::now();
@@ -396,8 +406,10 @@ impl eframe::App for FourTrisApp {
             view::render_ui(self, &ctx, ui);
         });
 
+        #[cfg(not(target_arch = "wasm32"))]
         view::render_screenshot_crop_window_ui(self, &ctx);
 
+        #[cfg(not(target_arch = "wasm32"))]
         if let Some(window) = frame.winit_window() {
             let native_wayland =
                 std::env::var("WAYLAND_DISPLAY").is_ok() && std::env::var("DISPLAY").is_err();
@@ -406,7 +418,24 @@ impl eframe::App for FourTrisApp {
             }
         }
 
+        #[cfg(not(target_arch = "wasm32"))]
         if self.screenshot_crop.is_none() {
+            ctx.request_repaint();
+        }
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(bytes) = crate::web::take_pending_import() {
+                match image::load_from_memory(&bytes) {
+                    Ok(img) => {
+                        let rgba = img.into_rgba8();
+                        commands::import_screenshot_image(self, &rgba);
+                    }
+                    Err(e) => {
+                        self.set_status(format!("Failed to decode screenshot: {e}"));
+                    }
+                }
+            }
             ctx.request_repaint();
         }
     }

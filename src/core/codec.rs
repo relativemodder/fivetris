@@ -9,7 +9,7 @@ use super::game_state::{
 };
 use super::piece::{
     Cell, DEFAULT_HIDDEN_ROWS, MAX_BOARD_WIDTH, MAX_VISIBLE_HEIGHT, PieceState, Rotation,
-    Tetromino, piece_from_name,
+    Tetromino, cell_from_piece, piece_from_name,
 };
 
 #[derive(Debug)]
@@ -99,8 +99,8 @@ fn build_imported_state(
         current: PieceState {
             kind: Tetromino::I,
             rotation: Rotation::Spawn,
-            x: board.width as i32 / 2 - 2,
-            y: board.hidden_rows as i32 - 2,
+            x: board.spawn_x(),
+            y: board.spawn_y(),
         },
         hold: HoldState {
             piece: hold_piece,
@@ -276,16 +276,7 @@ fn parse_legacy_board_cell(ch: char) -> Result<Cell, CodecError> {
         '6' => Cell::L,
         '7' => Cell::T,
         _ => match piece_from_name(upper) {
-            Some(piece) => match piece {
-                Tetromino::I => Cell::I,
-                Tetromino::J => Cell::J,
-                Tetromino::S => Cell::S,
-                Tetromino::O => Cell::O,
-                Tetromino::Z => Cell::Z,
-                Tetromino::L => Cell::L,
-                Tetromino::T => Cell::T,
-                Tetromino::Mono => Cell::Gray,
-            },
+            Some(piece) => cell_from_piece(piece),
             None => return Err(CodecError::InvalidLegacyBoardCharacter(ch)),
         },
     };

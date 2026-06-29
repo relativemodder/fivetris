@@ -1,6 +1,8 @@
 use super::*;
+#[cfg(not(target_arch = "wasm32"))]
 use crate::app::screenshot_crop::render_screenshot_crop_window;
 
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn render_screenshot_crop_window_ui(app: &mut FourTrisApp, ctx: &egui::Context) {
     let Some(crop) = app.screenshot_crop.as_mut() else {
         return;
@@ -19,8 +21,13 @@ pub(crate) fn collect_actions(
 
     if app.state.ui_state.settings_open
         || ctx.egui_wants_keyboard_input()
-        || app.screenshot_crop.is_some()
     {
+        app.state.ui_state.previous_keys.clear();
+        return actions;
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    if app.screenshot_crop.is_some() {
         app.state.ui_state.previous_keys.clear();
         return actions;
     }
@@ -75,8 +82,13 @@ pub(crate) fn render_ui(app: &mut FourTrisApp, ctx: &egui::Context, ui: &mut egu
         if fa_btn(ui, '\u{f0ea}', "Paste State").clicked() {
             actions.push(AppAction::PasteState);
         }
+        #[cfg(not(target_arch = "wasm32"))]
         if fa_btn(ui, '\u{f030}', "Screenshot").clicked() {
             actions.push(AppAction::RequestScreenshot);
+        }
+        #[cfg(target_arch = "wasm32")]
+        if fa_btn(ui, '\u{f093}', "Import Screenshot").clicked() {
+            crate::web::prompt_import_screenshot();
         }
         if let Some(message) = &app.state.ui_state.status_message {
             ui.label(message);

@@ -1,5 +1,5 @@
 use std::collections::HashSet;
-use std::time::{Duration, Instant};
+use web_time::{Duration, Instant};
 
 use crate::app::actions::AppAction;
 use crate::config::{AppConfig, KeyName};

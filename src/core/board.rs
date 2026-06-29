@@ -67,6 +67,14 @@ impl Board {
         );
     }
 
+    pub fn spawn_x(&self) -> i32 {
+        (self.width as i32) / 2 - 2
+    }
+
+    pub fn spawn_y(&self) -> i32 {
+        (self.hidden_rows as i32) - 2
+    }
+
     pub fn is_line_full(&self, y: usize) -> bool {
         let start = y * self.width;
         for x in 0..self.width {

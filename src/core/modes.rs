@@ -37,12 +37,10 @@ pub fn reset_for_mode(game: &mut GameState, mode: GameMode) {
         _ => GravityState::default(),
     };
 
-    let width = game.board.width;
-
     game.current = PieceState {
         kind: Tetromino::I,
         rotation: Rotation::Spawn,
-        x: (width as i32) / 2 - 2,
+        x: game.board.spawn_x(),
         y: game.board.total_height() as i32 - 2,
     };
 

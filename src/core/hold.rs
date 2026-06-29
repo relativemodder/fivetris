@@ -11,11 +11,8 @@ pub fn hold_swap(game: &mut GameState) -> Result<(), HoldError> {
         return Err(HoldError::Locked);
     }
 
-    let width = game.board.width;
-    let hidden_rows = game.board.hidden_rows;
-
-    game.current.x = (width as i32) / 2 - 2;
-    game.current.y = hidden_rows as i32 - 2;
+    game.current.x = game.board.spawn_x();
+    game.current.y = game.board.spawn_y();
     game.current.rotation = Rotation::Spawn;
 
     let current_kind = game.current.kind;

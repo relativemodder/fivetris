@@ -20,7 +20,10 @@ pub fn load() -> Result<Option<Vec<Tetromino>>, io::Error> {
         Ok(raw) => parse_static_queue(&raw)
             .map(Some)
             .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, format!("{error:?}"))),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+        Err(error)
+            if error.kind() == io::ErrorKind::NotFound
+                || cfg!(target_arch = "wasm32") =>
+        {
             parse_static_queue(resources::BUILTIN_PIECE_LIST)
                 .map(Some)
                 .map_err(|error| io::Error::new(io::ErrorKind::InvalidData, format!("{error:?}")))

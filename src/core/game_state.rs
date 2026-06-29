@@ -162,6 +162,14 @@ pub struct LockDelayState {
     pub delay_ms: u32,
 }
 
+impl LockDelayState {
+    pub fn reset(&mut self) {
+        self.active = false;
+        self.timer_ms = 0;
+        self.moves = 0;
+    }
+}
+
 impl Default for LockDelayState {
     fn default() -> Self {
         Self {

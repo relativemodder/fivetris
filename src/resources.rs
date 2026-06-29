@@ -65,15 +65,35 @@ const BUILTIN_AUDIO: [(&str, &[u8]); 11] = [
 ];
 
 pub fn config_dir() -> PathBuf {
+    cfg_if_config_dir()
+}
+
+pub fn data_dir() -> PathBuf {
+    cfg_if_data_dir()
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+fn cfg_if_config_dir() -> PathBuf {
     dirs::config_dir()
         .unwrap_or_else(|| PathBuf::from(".config"))
         .join("fivetris")
 }
 
-pub fn data_dir() -> PathBuf {
+#[cfg(not(target_arch = "wasm32"))]
+fn cfg_if_data_dir() -> PathBuf {
     dirs::data_dir()
         .unwrap_or_else(|| PathBuf::from(".local/share"))
         .join("fivetris")
+}
+
+#[cfg(target_arch = "wasm32")]
+fn cfg_if_config_dir() -> PathBuf {
+    PathBuf::from("fivetris")
+}
+
+#[cfg(target_arch = "wasm32")]
+fn cfg_if_data_dir() -> PathBuf {
+    PathBuf::from("fivetris/data")
 }
 
 pub fn config_file(name: &str) -> PathBuf {

@@ -125,8 +125,8 @@ pub fn import_board_from_analysis(
         auto_color_board(&mut game.board);
     }
 
-    game.current.x = (game.board.width as i32) / 2 - 2;
-    game.current.y = game.board.hidden_rows as i32 - 2;
+    game.current.x = game.board.spawn_x();
+    game.current.y = game.board.spawn_y();
     game.current.rotation = Rotation::Spawn;
     game.hold.swapped_this_turn = false;
     game.stats.lost = false;
@@ -136,9 +136,7 @@ pub fn import_board_from_analysis(
     game.spin.is_t_spin = false;
     game.spin.is_mini = false;
     game.spin.last_kick_index = None;
-    game.lock_delay.active = false;
-    game.lock_delay.timer_ms = 0;
-    game.lock_delay.moves = 0;
+    game.lock_delay.reset();
     game.clear_flash.active = false;
     game.clear_flash.lines.clear();
     game.clear_flash.timer_ms = 0;

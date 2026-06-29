@@ -1,5 +1,7 @@
 use super::*;
+#[cfg(not(target_arch = "wasm32"))]
 use image::imageops;
+use image::RgbaImage;
 
 pub(crate) fn replace_game_state(app: &mut FourTrisApp, game: GameState) {
     app.state.game_loop.game = game;
@@ -30,6 +32,7 @@ pub(crate) fn screenshot_analysis_config(app: &FourTrisApp) -> ScreenshotAnalysi
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn start_screenshot_crop(app: &mut FourTrisApp, image: RgbaImage) {
     if app.screenshot_crop.is_some() {
         return;
@@ -56,6 +59,7 @@ pub(crate) fn import_screenshot_image(app: &mut FourTrisApp, rgba: &RgbaImage) {
     }
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn finish_screenshot_crop(app: &mut FourTrisApp, action: ScreenshotCropAction) {
     let Some(crop_state) = app.screenshot_crop.take() else {
         return;
@@ -103,6 +107,7 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
             }
             Err(error) => app.set_status(format!("Paste failed: {error}")),
         },
+        #[cfg(not(target_arch = "wasm32"))]
         AppAction::RequestScreenshot => {
             if !app.waiting_for_screenshot {
                 app.waiting_for_screenshot = true;
@@ -115,6 +120,7 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
     true
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 pub(crate) fn poll_platform_events(app: &mut FourTrisApp) {
     while let Ok(event) = app.platform_events.try_recv() {
         match event {

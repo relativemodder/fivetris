@@ -6,11 +6,7 @@ use crossbeam_channel::Sender;
 use image::GenericImageView;
 use tokio::runtime::{Handle, Runtime};
 
-use super::{PlatformEvent, ScreenshotImage};
-
-pub trait ScreenshotRequester {
-    fn request_interactive_capture(&self);
-}
+use super::{PlatformEvent, ScreenshotImage, ScreenshotRequester};
 
 #[derive(Debug, Clone)]
 pub enum ScreenshotError {

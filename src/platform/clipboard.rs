@@ -1,4 +1,6 @@
 use std::fmt;
+#[cfg(target_arch = "wasm32")]
+use std::sync::Mutex;
 
 pub struct SystemClipboard;
 
@@ -22,6 +24,7 @@ impl fmt::Display for ClipboardError {
 
 impl std::error::Error for ClipboardError {}
 
+#[cfg(not(target_arch = "wasm32"))]
 impl Clipboard for SystemClipboard {
     fn set_text(&self, text: String) -> Result<(), ClipboardError> {
         let mut clipboard = arboard::Clipboard::new()
@@ -37,6 +40,24 @@ impl Clipboard for SystemClipboard {
         clipboard
             .get_text()
             .map_err(|error| ClipboardError::Unavailable(error.to_string()))
+    }
+}
+
+#[cfg(target_arch = "wasm32")]
+impl Clipboard for SystemClipboard {
+    fn set_text(&self, text: String) -> Result<(), ClipboardError> {
+        static STORED: Mutex<Option<String>> = Mutex::new(None);
+        *STORED.lock().map_err(|e| ClipboardError::Unavailable(e.to_string()))? = Some(text);
+        Ok(())
+    }
+
+    fn get_text(&self) -> Result<String, ClipboardError> {
+        static STORED: Mutex<Option<String>> = Mutex::new(None);
+        STORED
+            .lock()
+            .map_err(|e| ClipboardError::Unavailable(e.to_string()))?
+            .clone()
+            .ok_or_else(|| ClipboardError::Unavailable("clipboard is empty".to_string()))
     }
 }
 

@@ -2,11 +2,11 @@ use std::ffi::OsStr;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr;
 use std::thread;
-use std::time::{Duration, Instant};
+use web_time::{Duration, Instant};
 
 use crossbeam_channel::Sender;
 
-use super::{PlatformEvent, ScreenshotImage};
+use super::{PlatformEvent, ScreenshotImage, ScreenshotRequester};
 
 pub trait ScreenshotRequester {
     fn request_interactive_capture(&self);

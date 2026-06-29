@@ -2,11 +2,7 @@ use std::fmt;
 
 use crossbeam_channel::Sender;
 
-use super::PlatformEvent;
-
-pub trait ScreenshotRequester {
-    fn request_interactive_capture(&self);
-}
+use super::{PlatformEvent, ScreenshotRequester};
 
 #[derive(Debug, Clone)]
 pub enum ScreenshotError {

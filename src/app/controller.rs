@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+use web_time::{Duration, Instant};
 
 use crate::app::AppState;
 use crate::app::actions::AppAction;
@@ -245,24 +245,12 @@ impl GameController {
 
 #[cfg(test)]
 mod tests {
-    use std::time::{Duration, Instant};
+    use web_time::{Duration, Instant};
 
     use super::GameController;
-    use crate::app::AppState;
     use crate::app::actions::AppAction;
-    use crate::app::ui_state::UiState;
-    use crate::core::game_loop::GameLoop;
-    use crate::core::{BagMode, GameMode};
-
-    fn test_state() -> AppState {
-        let mut game_loop = GameLoop::new(GameMode::Training, BagMode::SevenBag, 0, true);
-        game_loop.spawn_next();
-        AppState {
-            game_loop,
-            ui_state: UiState::default(),
-            paused: false,
-        }
-    }
+    use crate::app::test::test_state;
+    use crate::core::GameMode;
 
     #[test]
     fn cycle_mode_uses_round_robin_order() {

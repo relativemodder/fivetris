@@ -7,20 +7,31 @@ pub use screenshot_analyzer::{
     import_board_from_analysis,
 };
 
+#[cfg(not(target_arch = "wasm32"))]
+pub trait ScreenshotRequester {
+    fn request_interactive_capture(&self);
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(target_os = "linux")]
 pub mod screenshot_portal;
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(target_os = "linux")]
-pub use screenshot_portal::{ScreenshotError, ScreenshotPortalService, ScreenshotRequester};
+pub use screenshot_portal::{ScreenshotError, ScreenshotPortalService};
 
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(target_os = "windows")]
 mod screenshot_windows;
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(target_os = "windows")]
-pub use screenshot_windows::{ScreenshotError, ScreenshotPortalService, ScreenshotRequester};
+pub use screenshot_windows::{ScreenshotError, ScreenshotPortalService};
 
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
 mod screenshot_fallback;
+#[cfg(not(target_arch = "wasm32"))]
 #[cfg(not(any(target_os = "linux", target_os = "windows")))]
-pub use screenshot_fallback::{ScreenshotError, ScreenshotPortalService, ScreenshotRequester};
+pub use screenshot_fallback::{ScreenshotError, ScreenshotPortalService};
 
 #[derive(Debug, Clone)]
 pub struct ScreenshotImage {
@@ -29,6 +40,7 @@ pub struct ScreenshotImage {
     pub rgba: Vec<u8>,
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 #[derive(Debug, Clone)]
 pub enum PlatformEvent {
     ScreenshotReady(Result<ScreenshotImage, ScreenshotError>),
@@ -68,7 +80,7 @@ fn parse_gsettings_color_scheme(value: &str) -> Option<PreferredColorScheme> {
     }
 }
 
-#[cfg(target_os = "windows")]
+#[cfg(all(target_os = "windows", not(target_arch = "wasm32")))]
 pub fn set_window_dark_mode(hwnd: *mut std::ffi::c_void, dark: bool) {
     #[link(name = "dwmapi")]
     unsafe extern "system" {

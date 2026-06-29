@@ -15,7 +15,7 @@ use super::rotation::{fits, freeze_active_piece, try_move, try_rotate};
 use super::scoring::resolve_lock_and_clears;
 use crate::config::load_static_queue;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SoundEffect {
     Move,
     Rotate,
@@ -153,7 +153,7 @@ impl GameLoop {
 
         reset_for_mode(&mut game, mode);
 
-        game.current.y = (hidden_rows as i32) - 2;
+        game.current.y = game.board.spawn_y();
 
         let generator =
             Self::create_queue_generator(game.queue.mode, game.queue.seed, static_bag_enabled);
@@ -225,17 +225,14 @@ impl GameLoop {
         }
 
         let next = self.game.queue.visible.remove(0);
-        let hidden = self.game.board.hidden_rows;
         self.game.current.kind = next;
-        self.game.current.x = (self.game.board.width as i32) / 2 - 2;
-        self.game.current.y = (hidden as i32) - 2;
+        self.game.current.x = self.game.board.spawn_x();
+        self.game.current.y = self.game.board.spawn_y();
         self.game.current.rotation = Rotation::Spawn;
         self.game.hold.swapped_this_turn = false;
         self.game.spin = SpinState::default();
 
-        self.game.lock_delay.active = false;
-        self.game.lock_delay.timer_ms = 0;
-        self.game.lock_delay.moves = 0;
+        self.game.lock_delay.reset();
 
         if !fits(&self.game.board, self.game.current) {
             self.game.stats.lost = true;
@@ -293,9 +290,7 @@ impl GameLoop {
         let result = super::hold::hold_swap(&mut self.game);
         if result.is_ok() {
             self.pending_sounds.push(SoundEffect::Hold);
-            self.game.lock_delay.active = false;
-            self.game.lock_delay.timer_ms = 0;
-            self.game.lock_delay.moves = 0;
+            self.game.lock_delay.reset();
             if self.game.queue.visible.len() < 7 {
                 self.queue_generator
                     .fill_queue(&mut self.game.queue.visible);
@@ -331,9 +326,7 @@ impl GameLoop {
     fn do_lock_and_spawn_inner(&mut self) {
         freeze_active_piece(&mut self.game);
         let outcome = resolve_lock_and_clears(&mut self.game);
-        self.game.lock_delay.active = false;
-        self.game.lock_delay.timer_ms = 0;
-        self.game.lock_delay.moves = 0;
+        self.game.lock_delay.reset();
 
         if !self.game.stats.lost {
             if outcome.lines_cleared > 0 {
@@ -370,9 +363,7 @@ impl GameLoop {
 
     pub fn hard_drop(&mut self) {
         self.push_turn_start_snapshot();
-        self.game.lock_delay.active = false;
-        self.game.lock_delay.timer_ms = 0;
-        self.game.lock_delay.moves = 0;
+        self.game.lock_delay.reset();
         self.pending_sounds.push(SoundEffect::HardDrop);
         while try_move(&mut self.game, 0, 1) {}
         self.do_lock_and_spawn_inner();
@@ -424,9 +415,7 @@ impl GameLoop {
             }
         } else {
             if self.game.lock_delay.active {
-                self.game.lock_delay.active = false;
-                self.game.lock_delay.timer_ms = 0;
-                self.game.lock_delay.moves = 0;
+                self.game.lock_delay.reset();
             }
         }
     }
@@ -456,7 +445,7 @@ impl GameLoop {
         self.game.auto_lock_on_ground = auto_lock_on_ground;
         self.game.mirror_queue_with_field = mirror_queue_with_field;
         self.game.highlight_clear = highlight_clear;
-        self.game.current.y = (self.game.board.hidden_rows as i32) - 2;
+        self.game.current.y = self.game.board.spawn_y();
         self.history = History::new(100);
         self.queue_generator =
             Self::create_queue_generator(bag_mode, self.game.queue.seed, self.static_bag_enabled);
@@ -572,9 +561,7 @@ mod tests {
         game_loop.game.garbage_hole_pos = 0;
         game_loop.game.garbage_hole_size = 0;
         game_loop.game.garbage_hole_next_change = 0;
-        game_loop.game.lock_delay.active = false;
-        game_loop.game.lock_delay.timer_ms = 0;
-        game_loop.game.lock_delay.moves = 0;
+        game_loop.game.lock_delay.reset();
         game_loop.game.lock_delay.max_moves = 15;
         game_loop.game.lock_delay.delay_ms = 500;
         game_loop.game.clear_flash.active = false;
@@ -728,7 +715,7 @@ mod tests {
     fn undo_after_auto_lock_clear_restores_turn_spawn_state() {
         let mut game_loop = GameLoop::new(GameMode::Training, BagMode::SevenBag, 7, true);
         let bottom = game_loop.game.board.total_height() - 1;
-        let spawn_y = game_loop.game.board.hidden_rows as i32 - 2;
+        let spawn_y = game_loop.game.board.spawn_y();
 
         for x in 0..game_loop.game.board.width {
             if x != 4 {
