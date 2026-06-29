@@ -426,6 +426,11 @@ pub fn draw_board(ui: &mut egui::Ui, view: &GameRenderView<'_>, actions: &mut Ve
         || response.clicked_by(egui::PointerButton::Secondary);
 
     if primary_drag || secondary_drag {
+        if response.drag_started_by(egui::PointerButton::Primary)
+            || response.drag_started_by(egui::PointerButton::Secondary)
+        {
+            actions.push(AppAction::BeginBrushStroke);
+        }
         if let Some(pos) = response.interact_pointer_pos() {
             if let Some((cx, cy)) = pointer_to_cell(
                 pos,

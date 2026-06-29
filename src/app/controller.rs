@@ -51,7 +51,8 @@ impl GameController {
             | AppAction::SelectTexture(_)
             | AppAction::ApplySettings
             | AppAction::ConfirmSettings
-            | AppAction::CancelSettings => {}
+            | AppAction::CancelSettings
+            | AppAction::BeginBrushStroke => {}
             AppAction::TogglePause => {
                 state.paused = !state.paused;
                 self.clear_repeat_state();

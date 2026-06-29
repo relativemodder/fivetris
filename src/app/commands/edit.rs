@@ -5,6 +5,9 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
         AppAction::SetEditColor(cell) => {
             app.state.ui_state.edit_color = cell;
         }
+        AppAction::BeginBrushStroke => {
+            app.state.game_loop.push_snapshot();
+        }
         AppAction::ClearBoard => {
             app.state.game_loop.game.board.clear_all();
             app.state.game_loop.game.highlights.clear_all();
@@ -23,12 +26,14 @@ pub(crate) fn handle_app_action(app: &mut FourTrisApp, action: AppAction) -> boo
                     auto_color_board(&mut game.board);
                 }
             }
+            app.state.game_loop.update_turn_start_snapshot();
         }
         AppAction::EditHighlightCell(x, y, alpha) => {
             let game = &mut app.state.game_loop.game;
             if game.board.in_bounds(x, y) {
                 game.highlights.set(x as usize, y as usize, alpha);
             }
+            app.state.game_loop.update_turn_start_snapshot();
         }
         AppAction::StartBagEdit => {
             app.bag_edit_text = app

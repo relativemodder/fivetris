@@ -34,6 +34,7 @@ pub enum AppAction {
     Undo,
     Redo,
     SetEditColor(Cell),
+    BeginBrushStroke,
     ClearBoard,
     ToggleHighlightMode,
     ClearHighlight,

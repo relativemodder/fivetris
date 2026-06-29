@@ -177,6 +177,14 @@ impl GameLoop {
         ));
     }
 
+    pub fn update_turn_start_snapshot(&mut self) {
+        self.turn_start_snapshot = Some(UndoSnapshot::new(
+            &self.game,
+            &self.queue_generator,
+            self.gravity_accum,
+        ));
+    }
+
     fn push_turn_start_snapshot(&mut self) {
         if let Some(snapshot) = self.turn_start_snapshot.clone() {
             self.history.push(snapshot);
