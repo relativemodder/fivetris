@@ -3,7 +3,7 @@ This is a Rust rewrite of [four-tris](https://github.com/fiorescarlatto/four-tri
 
 # Download
 
-You can download the latest release from the [releases page](https://github.com/relativemodder/fivetris/releases).
+You can download the latest release from the [releases page](https://github.com/relativemodder/fivetris/releases), or [try it out](https://relativemodder.github.io/fivetris/) in your browser.
 
 <img src="./assets/docs/1.png">
 <p align="center">You can draw pieces on the board and test different strategies</p>
