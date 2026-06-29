@@ -46,4 +46,6 @@ pub enum AppAction {
     StartHoldEdit(String),
     ApplyHoldEdit(String),
     CancelHoldEdit,
+    ImportSettings,
+    ExportSettings,
 }

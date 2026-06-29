@@ -52,6 +52,8 @@ impl GameController {
             | AppAction::ApplySettings
             | AppAction::ConfirmSettings
             | AppAction::CancelSettings
+            | AppAction::ImportSettings
+            | AppAction::ExportSettings
             | AppAction::BeginBrushStroke => {}
             AppAction::TogglePause => {
                 state.paused = !state.paused;
@@ -208,14 +210,7 @@ impl GameController {
                 now,
                 soft_drop_state,
                 soft_drop_interval_ms,
-                |instant_mode| {
-                    if instant_mode {
-                        while state.game_loop.try_move_piece(0, 1) {}
-                        false
-                    } else {
-                        state.game_loop.try_move_piece(0, 1)
-                    }
-                },
+                |_instant_mode| state.game_loop.try_move_piece(0, 1),
             );
         }
     }

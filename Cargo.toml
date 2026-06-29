@@ -32,6 +32,9 @@ rodio = "0.20"
 arboard = "3"
 raw-window-handle = "0.6"
 
+[target.'cfg(all(not(target_arch = "wasm32"), not(target_os = "linux")))'.dependencies]
+rfd = "0.15"
+
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 console_error_panic_hook = "0.1"
 wasm-bindgen = "0.2"
@@ -39,7 +42,7 @@ wasm-bindgen-futures = "0.4"
 getrandom = { version = "0.2", features = ["js"] }
 js-sys = "0.3"
 web-sys = { version = "0.3", features = [
-    "Window", "Document", "Element", "HtmlCanvasElement", "console", "Storage",
+    "Window", "Document", "Element", "HtmlCanvasElement", "HtmlElement", "console", "Storage",
     "FileReader", "HtmlInputElement",
     "AudioContext", "AudioBuffer", "AudioBufferSourceNode", "GainNode",
     "AudioNode", "AudioParam", "AudioDestinationNode",

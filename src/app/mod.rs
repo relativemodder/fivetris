@@ -436,6 +436,17 @@ impl eframe::App for FourTrisApp {
                     }
                 }
             }
+            if let Some(json) = crate::web::take_pending_settings_import() {
+                match serde_json::from_str::<AppConfig>(&json) {
+                    Ok(config) => {
+                        self.state.ui_state.pending_config = Some(config);
+                        self.set_status("Settings imported");
+                    }
+                    Err(e) => {
+                        self.set_status(format!("Failed to import settings: {e}"));
+                    }
+                }
+            }
             ctx.request_repaint();
         }
     }

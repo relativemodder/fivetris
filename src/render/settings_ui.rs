@@ -1,6 +1,7 @@
 use crate::app::actions::AppAction;
 use crate::app::ui_state::UiState;
 use crate::config::{AppConfig, KeyName, PersistedBagMode};
+use crate::render::btn;
 
 fn drag<T: egui::emath::Numeric>(
     ui: &mut egui::Ui,
@@ -53,6 +54,17 @@ pub fn draw_settings_window(
                     egui::Frame::NONE
                         .inner_margin(egui::Margin::symmetric(8, 4))
                         .show(ui, |ui| {
+                    ui.horizontal(|ui| {
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            if btn(ui, "Import Settings").clicked() {
+                                actions.push(AppAction::ImportSettings);
+                            }
+                            if btn(ui, "Export Settings").clicked() {
+                                actions.push(AppAction::ExportSettings);
+                            }
+                        });
+                    });
+                    ui.separator();
                     ui.checkbox(&mut cfg.show_ghost, "Show ghost piece");
 
                     let mut volume = i32::from(cfg.volume_percent);

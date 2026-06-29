@@ -4,6 +4,7 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 
 static PENDING_IMPORT: Mutex<Option<Vec<u8>>> = Mutex::new(None);
+static PENDING_SETTINGS_IMPORT: Mutex<Option<String>> = Mutex::new(None);
 
 pub fn take_pending_import() -> Option<Vec<u8>> {
     PENDING_IMPORT.lock().unwrap().take()
@@ -51,6 +52,73 @@ pub fn setup_clipboard_paste() {
         .add_event_listener_with_callback("paste", on_paste.as_ref().unchecked_ref())
         .expect("add paste listener");
     on_paste.forget();
+}
+
+pub fn take_pending_settings_import() -> Option<String> {
+    PENDING_SETTINGS_IMPORT.lock().unwrap().take()
+}
+
+pub fn prompt_import_settings() {
+    let window = web_sys::window().expect("no window");
+    let document = window.document().expect("no document");
+
+    let input = document
+        .create_element("input")
+        .expect("create input")
+        .dyn_into::<web_sys::HtmlInputElement>()
+        .expect("cast input");
+    input.set_type("file");
+    input.set_accept(".json,application/json");
+
+    let input_clone = input.clone();
+    let on_change = Closure::<dyn Fn()>::new(move || {
+        if let Some(file) = input_clone.files().and_then(|f| f.item(0)) {
+            let reader = web_sys::FileReader::new().expect("create FileReader");
+            let reader_c = reader.clone();
+            let on_load = Closure::<dyn Fn()>::new(move || {
+                let result = reader_c.result().expect("file read result").as_string();
+                if let Some(json) = result {
+                    *PENDING_SETTINGS_IMPORT.lock().unwrap() = Some(json);
+                }
+            });
+            reader.set_onload(Some(on_load.as_ref().unchecked_ref()));
+            on_load.forget();
+            reader.read_as_text(&file).expect("read file");
+        }
+    });
+    input
+        .add_event_listener_with_callback("change", on_change.as_ref().unchecked_ref())
+        .expect("add change listener");
+    on_change.forget();
+
+    let body = document.body().expect("no body");
+    body.append_child(&input).expect("append input");
+    input.click();
+    body.remove_child(&input).expect("remove input");
+}
+
+pub fn export_settings(json: &str) {
+    let window = web_sys::window().expect("no window");
+    let document = window.document().expect("no document");
+
+    let encoded = js_sys::encode_uri_component(json);
+    let data_url = format!("data:application/json,{encoded}");
+
+    let link = document
+        .create_element("a")
+        .expect("create link")
+        .dyn_into::<web_sys::HtmlElement>()
+        .expect("cast HtmlElement");
+    link.set_attribute("href", &data_url).expect("set href");
+    link.set_attribute("download", "fivetris-settings.json")
+        .expect("set download");
+    link.set_attribute("style", "display: none")
+        .expect("set style");
+
+    let body = document.body().expect("no body");
+    body.append_child(&link).expect("append link");
+    link.click();
+    body.remove_child(&link).expect("remove link");
 }
 
 pub fn prompt_import_screenshot() {
