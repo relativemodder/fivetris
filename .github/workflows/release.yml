@@ -98,9 +98,52 @@ jobs:
           name: windows-x86_64
           path: fivetris-${{ github.ref_name }}-windows-x86_64.zip
 
+  build-macos:
+    name: Build (macOS Universal)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin, aarch64-apple-darwin
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-universal
+
+      - name: Build x86_64
+        run: cargo build --release --target x86_64-apple-darwin
+
+      - name: Build arm64
+        run: cargo build --release --target aarch64-apple-darwin
+
+      - name: Create universal binary & bundle
+        run: |
+          lipo -create \
+            target/x86_64-apple-darwin/release/fivetris \
+            target/aarch64-apple-darwin/release/fivetris \
+            -output target/aarch64-apple-darwin/release/fivetris.app/Contents/MacOS/fivetris
+
+      - name: Package DMG
+        run: |
+          hdiutil create \
+            -volname "Fivetris ${{ github.ref_name }}" \
+            -srcFolder target/aarch64-apple-darwin/release/fivetris.app \
+            -ov -format UDZO \
+            fivetris-${{ github.ref_name }}-macos-universal.dmg
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-universal
+          path: fivetris-${{ github.ref_name }}-macos-universal.dmg
+
   release:
     name: Create GitHub Release
-    needs: [build-linux, build-windows]
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     steps:
@@ -113,4 +156,5 @@ jobs:
           files: |
             linux-x86_64/fivetris-${{ github.ref_name }}-linux-x86_64.tar.gz
             windows-x86_64/fivetris-${{ github.ref_name }}-windows-x86_64.zip
+            macos-universal/fivetris-${{ github.ref_name }}-macos-universal.dmg
           generate_release_notes: true
