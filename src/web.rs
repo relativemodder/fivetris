@@ -9,6 +9,50 @@ pub fn take_pending_import() -> Option<Vec<u8>> {
     PENDING_IMPORT.lock().unwrap().take()
 }
 
+pub fn setup_clipboard_paste() {
+    let window = web_sys::window().expect("no window");
+    let document = window.document().expect("no document");
+
+    let on_paste =
+        Closure::<dyn Fn(web_sys::ClipboardEvent)>::new(move |event: web_sys::ClipboardEvent| {
+            let Some(data) = event.clipboard_data() else { return };
+            let items = data.items();
+            let len = items.length();
+            for i in 0..len {
+                let Some(item) = items.get(i) else { continue };
+                if item.kind() == "file" && item.type_().starts_with("image/") {
+                    if let Ok(Some(file)) = item.get_as_file() {
+                        let reader = web_sys::FileReader::new().expect("create FileReader");
+                        let reader_c = reader.clone();
+                        let on_load = Closure::<dyn Fn()>::new(move || {
+                            let result = reader_c
+                                .result()
+                                .expect("file read result")
+                                .dyn_into::<js_sys::ArrayBuffer>()
+                                .ok()
+                                .map(|ab| {
+                                    let array = js_sys::Uint8Array::new(&ab);
+                                    array.to_vec()
+                                });
+                            if let Some(bytes) = result {
+                                *PENDING_IMPORT.lock().unwrap() = Some(bytes);
+                            }
+                        });
+                        reader.set_onload(Some(on_load.as_ref().unchecked_ref()));
+                        on_load.forget();
+                        reader.read_as_array_buffer(&file).expect("read file");
+                    }
+                    break;
+                }
+            }
+        });
+
+    document
+        .add_event_listener_with_callback("paste", on_paste.as_ref().unchecked_ref())
+        .expect("add paste listener");
+    on_paste.forget();
+}
+
 pub fn prompt_import_screenshot() {
     let window = web_sys::window().expect("no window");
     let document = window.document().expect("no document");
@@ -79,6 +123,8 @@ pub async fn start() -> Result<(), JsValue> {
         )
         .await
         .expect("failed to start eframe web app");
+
+    setup_clipboard_paste();
 
     Ok(())
 }

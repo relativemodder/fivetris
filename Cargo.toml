@@ -43,6 +43,7 @@ web-sys = { version = "0.3", features = [
     "FileReader", "HtmlInputElement",
     "AudioContext", "AudioBuffer", "AudioBufferSourceNode", "GainNode",
     "AudioNode", "AudioParam", "AudioDestinationNode",
+    "ClipboardEvent", "DataTransfer", "DataTransferItem", "DataTransferItemList", "File",
 ] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
